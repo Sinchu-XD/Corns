@@ -69,6 +69,8 @@ async def check_subscription(client, callback_query):
     user_id = callback_query.from_user.id
     if await is_subscribed(client, user_id):
         await callback_query.message.edit("✅ You’re now verified! Use the bot freely.")
+        # After successful verification, add token to db
+        db[user_id] = {"expires": datetime.now() + timedelta(days=1)}
     else:
         await callback_query.answer("❌ You still haven't joined the channels.", show_alert=True)
 
