@@ -1,28 +1,30 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime, timedelta
+from pyrogram.errors import UserNotParticipant
 
 API_ID = 6067591
 API_HASH = "94e17044c2393f43fda31d3afe77b26b"
 BOT_TOKEN = "7758255754:AAH0wvr7nwSzEDq49UxhDi0hv0oVQvuRe_s"
 
 REQUIRED_CHANNELS = ["@CornVideos4k", "@Itz_Your_4Bhi"]
-db = {}  # Replace with persistent DB if needed
+db = {}
 
 app = Client("ads-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# Subscription checker
+# Check if user is subscribed without needing admin access
 async def is_subscribed(client, user_id):
-    try:
-        for channel in REQUIRED_CHANNELS:
-            chat = await client.get_chat(channel)
-            member = await client.get_chat_member(chat.id, user_id)
-            if member.status not in ("member", "administrator", "creator"):
+    for channel in REQUIRED_CHANNELS:
+        try:
+            member = await client.get_chat_member(channel, user_id)
+            if member.status in ("left",):
                 return False
-        return True
-    except Exception as e:
-        print(f"Error in subscription check: {e}")
-        return False
+        except UserNotParticipant:
+            return False
+        except Exception as e:
+            print(f"Check failed for {channel}: {e}")
+            return False
+    return True
 
 def get_token(user_id):
     if user_id in db and db[user_id]["expires"] > datetime.now():
@@ -37,10 +39,11 @@ async def start(client, message):
         join_buttons = [
             [InlineKeyboardButton("🔗 Join Channel 1", url="https://t.me/CornVideos4k")],
             [InlineKeyboardButton("🔗 Join Channel 2", url="https://t.me/Itz_Your_4Bhi")],
+            [InlineKeyboardButton("✅ I Joined", callback_data="check_sub")],
         ]
         await message.reply(
-            "**❌ You must join the channels to use this bot!**\n\n"
-            "✅ Once done, press /start again.",
+            "**❌ You must join both channels to use this bot!**\n\n"
+            "👉 Then press **I Joined** to continue.",
             reply_markup=InlineKeyboardMarkup(join_buttons)
         )
         return
@@ -49,18 +52,25 @@ async def start(client, message):
     if not token_data:
         ad_buttons = [
             [InlineKeyboardButton("• Watch Ad •", url="https://t.me/CornVideos4k")],
-            [InlineKeyboardButton("• How To Open •", url="https://t.me/Cornvideos4k/3")],
             [InlineKeyboardButton("• Buy Premium Plan •", url="https://t.me/LookRex")]
         ]
         await message.reply(
-            "**📛 Your Ads Token Has Expired!**\n\n"
-            "🔓 **Watch 3 pages to unlock for 1 day.**\n"
-            "🎁 **Or Buy Premium to avoid ads!**",
+            "**📛 Ads Token Expired!**\n\n"
+            "✅ View 3 pages to reactivate your token for 1 day.\n"
+            "🚫 Avoid ads? Go premium!",
             reply_markup=InlineKeyboardMarkup(ad_buttons)
         )
         return
 
-    await message.reply("✅ Token Verified! You can now use the bot features.")
+    await message.reply("✅ Token verified! You can now use the bot.")
+
+@app.on_callback_query(filters.regex("check_sub"))
+async def check_subscription(client, callback_query):
+    user_id = callback_query.from_user.id
+    if await is_subscribed(client, user_id):
+        await callback_query.message.edit("✅ You’re now verified! Use the bot freely.")
+    else:
+        await callback_query.answer("❌ You still haven't joined the channels.", show_alert=True)
 
 @app.on_message(filters.private & filters.command("get_token"))
 async def get_token_command(client, message):
