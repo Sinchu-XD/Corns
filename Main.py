@@ -1,4 +1,4 @@
-from pyrogram import Client, filters
+1from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime, timedelta
 import json, os
@@ -30,7 +30,7 @@ def get_token(user_id):
 
 @app.on_message(filters.command("start"))
 async def start(client, message):
-    if message.chat.type not in != "private":
+    if message.chat.type not in = "private":
         await message.reply("❌ This bot works only in private chat. Please message me here in DM.")
         return
 
