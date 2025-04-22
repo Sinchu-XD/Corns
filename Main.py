@@ -3,10 +3,10 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime, timedelta
 import json, os
 
-API_ID = "YOUR_API_ID"
-API_HASH = "YOUR_API_HASH"
-BOT_TOKEN = "YOUR_BOT_TOKEN"
-REQUIRED_CHANNELS = ["@Channel1", "@Channel2"]
+API_ID = 6067591
+API_HASH = "94e17044c2393f43fda31d3afe77b26b"
+BOT_TOKEN = "7758255754:AAH0wvr7nwSzEDq49UxhDi0hv0oVQvuRe_s"
+REQUIRED_CHANNELS = ["@CornVideos4k", "@Itz_Your_4Bhi"]
 
 db = {}  # This will be your in-memory user database. Replace with DB for production.
 
