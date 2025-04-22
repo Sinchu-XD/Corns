@@ -30,10 +30,7 @@ def get_token(user_id):
 
 @app.on_message(filters.command("start"))
 async def start(client, message):
-    if message.chat.type != "group":
-        await message.reply("❌ This bot works only in private chat. Please message me here in DM.")
-        return
-
+    
     user_id = message.from_user.id
 
     if not await is_subscribed(client, user_id):
