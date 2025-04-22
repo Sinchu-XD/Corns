@@ -12,9 +12,16 @@ db = {}  # This will be your in-memory user database. Replace with DB for produc
 
 app = Client("ads-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-def is_subscribed(user_id):
-    # Dummy subscription check (implement real one with `get_chat_member`)
-    return all(True for _ in REQUIRED_CHANNELS)
+async def is_subscribed(client, user_id):
+    try:
+        for channel in REQUIRED_CHANNELS:
+            member = await client.get_chat_member(chat_id=channel, user_id=user_id)
+            if member.status not in ["member", "creator", "administrator"]:
+                return False
+        return True
+    except Exception:
+        return False
+
 
 def get_token(user_id):
     if user_id not in db or datetime.now() > db[user_id]["expires"]:
@@ -23,9 +30,13 @@ def get_token(user_id):
 
 @app.on_message(filters.command("start"))
 async def start(client, message):
+    if message.chat.type != "private":
+        await message.reply("❌ This bot works only in private chat. Please message me here in DM.")
+        return
+
     user_id = message.from_user.id
 
-    if not is_subscribed(user_id):
+    if not await is_subscribed(client, user_id):
         join_buttons = [
             [InlineKeyboardButton("Join Channel", url="https://t.me/Cornvideos4k"),
              InlineKeyboardButton("Developer Bc", url="https://t.me/Itz_Your_4Bhi")],
