@@ -1,3 +1,4 @@
+import os
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from pyrogram.enums import ChatMemberStatus
@@ -34,7 +35,7 @@ async def start(client, message: Message):
 @subscription_required
 async def handle_file(client, message: Message):
     user_id = message.from_user.id
-    if user_id not in OWNER_IDS and user_id not in get_sudo_users():
+    if user_id not in OWNER_IDS and user_id not in SUDO_USERS:
         return await message.reply("🚫 You are not allowed to upload files.")
 
     media = message.document or message.video or message.photo
@@ -61,7 +62,7 @@ async def handle_file(client, message: Message):
 @bot.on_message(filters.command("addch"))
 async def add_channel_command(client, message: Message):
     user_id = message.from_user.id
-    if user_id not in OWNER_IDS and user_id not in get_sudo_users():
+    if user_id not in OWNER_IDS and user_id not in SUDO_USERS:
         return await message.reply("🚫 You do not have permission to add channels.")
 
     try:
@@ -74,7 +75,7 @@ async def add_channel_command(client, message: Message):
 @bot.on_message(filters.command("rmch"))
 async def remove_channel_command(client, message: Message):
     user_id = message.from_user.id
-    if user_id not in OWNER_IDS and user_id not in get_sudo_users():
+    if user_id not in OWNER_IDS and user_id not in SUDO_USERS:
         return await message.reply("🚫 You do not have permission to remove channels.")
 
     try:
