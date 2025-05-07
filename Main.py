@@ -15,26 +15,23 @@ load_dotenv()
 bot = Client("file_store_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 # ✅ START command with deep link file support
-@bot.on_message(filters.private & filters.command("start"))
+@bot.on_message(filters.command("start") & filters.private)
 @subscription_required
-async def start(client, message: Message):
+async def start_command(client, message: Message):
     user_id = message.from_user.id
-    add_user(user_id)
-
-    args = message.text.split(maxsplit=1)
-
-    if len(args) > 1:
-        file_id = args[1]
-        file_data = get_file(file_id)
-        if file_data:
-            await message.reply_document(
-                file_id,
-                caption=f"📄 {file_data.get('file_name', 'Unnamed File')}"
+    if user_id not in OWNER_IDS and user_id not in SUDO_USERS:
+        await message.reply("👋 Hello Admin!\n\n📩 Send me any file like image, document, or video and I’ll convert it into a shareable link.")
+    else:
+        main_chat = get_all_channels()
+        if main_chat:
+            await message.reply(
+                "🍿 You can get corn content here.",
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("🔗 View Content", url=main_chat)]]
+                )
             )
         else:
-            await message.reply("❌ File not found or expired.")
-    else:
-        await message.reply("👋 Welcome! Send me a file and I'll give you a sharable link.")
+            await message.reply("❌ No content link set by admin.")
 
 # ✅ Save file and generate link
 @bot.on_message(filters.private & (filters.document | filters.video | filters.photo))
