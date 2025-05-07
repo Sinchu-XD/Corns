@@ -3,7 +3,7 @@ from pyrogram.errors import UserNotParticipant, PeerIdInvalid
 from pyrogram.enums import ChatMemberStatus
 from functools import wraps
 from Database import get_all_channels, get_force_check, get_sudo_users
-from Config import OWNER_ID
+from Config import OWNER_IDS
 
 async def check_subscription(bot, user_id: int) -> bool:
     channels = get_all_channels()
@@ -30,7 +30,7 @@ def subscription_required(func):
         user_id = user.id
 
         # OWNER and SUDO_USERS bypass
-        if user_id == OWNER_ID or user_id in get_sudo_users():
+        if user_id == OWNER_IDS or user_id in get_sudo_users():
             return await func(client, update)
 
         if not get_force_check():
