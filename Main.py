@@ -3,13 +3,13 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from pyrogram.enums import ChatMemberStatus
 from dotenv import load_dotenv
-from config import API_ID, API_HASH, BOT_TOKEN, OWNER_ID, LOG_GROUP_ID, SUDO_USERS
-from database import (
+from Config import API_ID, API_HASH, BOT_TOKEN, OWNER_ID, LOG_GROUP_ID, SUDO_USERS
+from Database import (
     add_file, get_file, add_user, add_sudo_user, remove_sudo_user,
     get_sudo_users, add_channel, remove_channel, get_all_channels,
     set_force_check, get_force_check
 )
-from decorators import subscription_required
+from Decorators import subscription_required
 
 load_dotenv()
 
