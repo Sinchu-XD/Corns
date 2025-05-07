@@ -1,6 +1,6 @@
 import os
 from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from dotenv import load_dotenv
 from Config import API_ID, API_HASH, BOT_TOKEN, OWNER_IDS, LOG_GROUP_ID, SUDO_USERS
 from Database import (
