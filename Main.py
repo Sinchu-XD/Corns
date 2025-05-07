@@ -35,7 +35,7 @@ async def start(client, message: Message):
 @subscription_required
 async def handle_file(client, message: Message):
     user_id = message.from_user.id
-    if user_id != OWNER_IDS and user_id not in get_sudo_users():
+    if user_id not in OWNER_IDS and user_id not in SUDO_USERS:
         return await message.reply("🚫 You are not allowed to upload files.")
 
     media = message.document or message.video or message.photo
@@ -60,9 +60,10 @@ async def handle_file(client, message: Message):
     )
 
 @bot.on_message(filters.command("addch"))
+@subscription_required
 async def add_channel_command(client, message: Message):
     user_id = message.from_user.id
-    if user_id != OWNER_IDS and user_id not in get_sudo_users():
+    if user_id not in OWNER_IDS and user_id not in SUDO_USERS:
         return await message.reply("🚫 You do not have permission to add channels.")
 
     try:
@@ -73,9 +74,10 @@ async def add_channel_command(client, message: Message):
         await message.reply("⚠️ Usage: /addch <slot> <channel_username>")
 
 @bot.on_message(filters.command("rmch"))
+@subscription_required
 async def remove_channel_command(client, message: Message):
     user_id = message.from_user.id
-    if user_id != OWNER_IDS and user_id not in get_sudo_users():
+    if user_id not in OWNER_IDS and user_id not in SUDO_USERS:
         return await message.reply("🚫 You do not have permission to remove channels.")
 
     try:
@@ -86,9 +88,10 @@ async def remove_channel_command(client, message: Message):
         await message.reply("⚠️ Usage: /rmch <slot>")
 
 @bot.on_message(filters.command("addsudo"))
+@subscription_required
 async def add_sudo(client, message: Message):
     user_id = message.from_user.id
-    if user_id != OWNER_IDS:
+    if user_id not in OWNER_IDS:
         return await message.reply("🚫 Only the owner can add sudo users.")
 
     try:
@@ -99,9 +102,10 @@ async def add_sudo(client, message: Message):
         await message.reply("⚠️ Usage: /addsudo <user_id>")
 
 @bot.on_message(filters.command("rmsudo"))
+@subscription_required
 async def remove_sudo(client, message: Message):
     user_id = message.from_user.id
-    if user_id != OWNER_IDS:
+    if user_id not in OWNER_IDS:
         return await message.reply("🚫 Only the owner can remove sudo users.")
 
     try:
@@ -112,9 +116,10 @@ async def remove_sudo(client, message: Message):
         await message.reply("⚠️ Usage: /rmsudo <user_id>")
 
 @bot.on_message(filters.command("sudolist"))
+@subscription_required
 async def show_sudo_list(client, message: Message):
     user_id = message.from_user.id
-    if user_id != OWNER_IDS:
+    if user_id not in OWNER_IDS:
         return await message.reply("🚫 Only the owner can view sudo users.")
 
     sudo_list = get_sudo_users()
@@ -124,18 +129,20 @@ async def show_sudo_list(client, message: Message):
     await message.reply(f"📝 SUDO Users List:\n\n{sudo_str}")
 
 @bot.on_message(filters.command("forceon"))
+@subscription_required
 async def force_on(client, message: Message):
     user_id = message.from_user.id
-    if user_id != OWNER_IDS:
+    if user_id not in OWNER_IDS:
         return await message.reply("🚫 Only the owner can enable force subscription.")
 
     set_force_check(True)
     await message.reply("✅ Force subscription enabled.")
 
 @bot.on_message(filters.command("forceoff"))
+@subscription_required
 async def force_off(client, message: Message):
     user_id = message.from_user.id
-    if user_id != OWNER_IDS:
+    if user_id not in OWNER_IDS:
         return await message.reply("🚫 Only the owner can disable force subscription.")
 
     set_force_check(False)
