@@ -1,7 +1,6 @@
 import os
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from pyrogram.enums import ChatMemberStatus
 from dotenv import load_dotenv
 from Config import API_ID, API_HASH, BOT_TOKEN, OWNER_IDS, LOG_GROUP_ID, SUDO_USERS
 from Database import (
@@ -15,22 +14,29 @@ load_dotenv()
 
 bot = Client("file_store_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
+# ✅ START command with deep link file support
 @bot.on_message(filters.private & filters.command("start"))
 @subscription_required
 async def start(client, message: Message):
     user_id = message.from_user.id
     add_user(user_id)
-    args = message.text.split()
+
+    args = message.text.split(maxsplit=1)
+
     if len(args) > 1:
         file_id = args[1]
         file_data = get_file(file_id)
         if file_data:
-            await message.reply_document(file_id, caption=f"📄 {file_data['file_name']}")
+            await message.reply_document(
+                file_id,
+                caption=f"📄 {file_data.get('file_name', 'Unnamed File')}"
+            )
         else:
-            await message.reply("❌ File not found.")
+            await message.reply("❌ File not found or expired.")
     else:
-        await message.reply("Welcome! Send me a file to store.")
+        await message.reply("👋 Welcome! Send me a file and I'll give you a sharable link.")
 
+# ✅ Save file and generate link
 @bot.on_message(filters.private & (filters.document | filters.video | filters.photo))
 @subscription_required
 async def handle_file(client, message: Message):
@@ -40,7 +46,8 @@ async def handle_file(client, message: Message):
 
     media = message.document or message.video or message.photo
     file_id = media.file_id
-    file_name = getattr(media, "file_name", "NoName")
+    file_name = getattr(media, "file_name", "Unnamed File")
+
     add_file(file_id, file_name, user_id)
 
     bot_username = (await client.get_me()).username
@@ -59,6 +66,7 @@ async def handle_file(client, message: Message):
         disable_web_page_preview=True
     )
 
+# ✅ Channel management commands
 @bot.on_message(filters.command("addch"))
 async def add_channel_command(client, message: Message):
     user_id = message.from_user.id
@@ -66,10 +74,10 @@ async def add_channel_command(client, message: Message):
         return await message.reply("🚫 You do not have permission to add channels.")
 
     try:
-        slot, username = message.text.split()[1], message.text.split()[2]
+        _, slot, username = message.text.split(maxsplit=2)
         add_channel(slot, username)
         await message.reply(f"✅ Channel {username} added in slot {slot}.")
-    except IndexError:
+    except ValueError:
         await message.reply("⚠️ Usage: /addch <slot> <channel_username>")
 
 @bot.on_message(filters.command("rmch"))
@@ -79,12 +87,13 @@ async def remove_channel_command(client, message: Message):
         return await message.reply("🚫 You do not have permission to remove channels.")
 
     try:
-        slot = message.text.split()[1]
+        _, slot = message.text.split(maxsplit=1)
         remove_channel(slot)
         await message.reply(f"✅ Channel in slot {slot} removed.")
-    except IndexError:
+    except ValueError:
         await message.reply("⚠️ Usage: /rmch <slot>")
 
+# ✅ SUDO management
 @bot.on_message(filters.command("addsudo"))
 async def add_sudo(client, message: Message):
     user_id = message.from_user.id
@@ -92,10 +101,11 @@ async def add_sudo(client, message: Message):
         return await message.reply("🚫 Only the owner can add sudo users.")
 
     try:
-        target_user = int(message.text.split()[1])
+        _, target = message.text.split(maxsplit=1)
+        target_user = int(target)
         add_sudo_user(target_user)
-        await message.reply(f"✅ {target_user} added as SUDO.")
-    except (IndexError, ValueError):
+        await message.reply(f"✅ `{target_user}` added as SUDO.")
+    except (ValueError, IndexError):
         await message.reply("⚠️ Usage: /addsudo <user_id>")
 
 @bot.on_message(filters.command("rmsudo"))
@@ -105,10 +115,11 @@ async def remove_sudo(client, message: Message):
         return await message.reply("🚫 Only the owner can remove sudo users.")
 
     try:
-        target_user = int(message.text.split()[1])
+        _, target = message.text.split(maxsplit=1)
+        target_user = int(target)
         remove_sudo_user(target_user)
-        await message.reply(f"✅ {target_user} removed from SUDO.")
-    except (IndexError, ValueError):
+        await message.reply(f"✅ `{target_user}` removed from SUDO.")
+    except (ValueError, IndexError):
         await message.reply("⚠️ Usage: /rmsudo <user_id>")
 
 @bot.on_message(filters.command("sudolist"))
@@ -120,9 +131,11 @@ async def show_sudo_list(client, message: Message):
     sudo_list = get_sudo_users()
     if not sudo_list:
         return await message.reply("No SUDO users found.")
-    sudo_str = "\n".join([f"`{uid}`" for uid in sudo_list])
-    await message.reply(f"📝 SUDO Users List:\n\n{sudo_str}")
 
+    sudo_text = "\n".join([f"• `{uid}`" for uid in sudo_list])
+    await message.reply(f"📝 SUDO Users:\n\n{sudo_text}")
+
+# ✅ Force subscription toggle
 @bot.on_message(filters.command("forceon"))
 async def force_on(client, message: Message):
     user_id = message.from_user.id
@@ -141,4 +154,5 @@ async def force_off(client, message: Message):
     set_force_check(False)
     await message.reply("✅ Force subscription disabled.")
 
+# ✅ Run bot
 bot.run()
