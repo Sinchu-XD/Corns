@@ -1,83 +1,144 @@
+import os
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from datetime import datetime, timedelta
-from pyrogram.errors import UserNotParticipant
+from pyrogram.types import Message
+from pyrogram.enums import ChatMemberStatus
+from dotenv import load_dotenv
+from config import API_ID, API_HASH, BOT_TOKEN, OWNER_ID, LOG_GROUP_ID, SUDO_USERS
+from database import (
+    add_file, get_file, add_user, add_sudo_user, remove_sudo_user,
+    get_sudo_users, add_channel, remove_channel, get_all_channels,
+    set_force_check, get_force_check
+)
+from decorators import subscription_required
 
-API_ID = 6067591
-API_HASH = "94e17044c2393f43fda31d3afe77b26b"
-BOT_TOKEN = "7758255754:AAH0wvr7nwSzEDq49UxhDi0hv0oVQvuRe_s"
+load_dotenv()
 
-REQUIRED_CHANNELS = ["@CornVideos4k", "@Itz_Your_4Bhi"]
-db = {}
+bot = Client("file_store_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-app = Client("ads-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
-
-# Check if user is subscribed without needing admin access
-async def is_subscribed(client, user_id):
-    for channel in REQUIRED_CHANNELS:
-        try:
-            member = await client.get_chat_member(channel, user_id)
-            if member.status in ("left",):
-                return False
-        except UserNotParticipant:
-            return False
-        except Exception as e:
-            print(f"Check failed for {channel}: {e}")
-            return False
-    return True
-
-def get_token(user_id):
-    if user_id in db and db[user_id]["expires"] > datetime.now():
-        return db[user_id]
-    return None
-
-@app.on_message(filters.private & filters.command("start"))
-async def start(client, message):
+@bot.on_message(filters.private & filters.command("start"))
+@subscription_required
+async def start(client, message: Message):
     user_id = message.from_user.id
-
-    if not await is_subscribed(client, user_id):
-        join_buttons = [
-            [InlineKeyboardButton("🔗 Join Channel 1", url="https://t.me/CornVideos4k")],
-            [InlineKeyboardButton("🔗 Join Channel 2", url="https://t.me/Itz_Your_4Bhi")],
-            [InlineKeyboardButton("✅ I Joined", callback_data="check_sub")],
-        ]
-        await message.reply(
-            "**❌ You must join both channels to use this bot!**\n\n"
-            "👉 Then press **I Joined** to continue.",
-            reply_markup=InlineKeyboardMarkup(join_buttons)
-        )
-        return
-
-    token_data = get_token(user_id)
-    if not token_data:
-        ad_buttons = [
-            [InlineKeyboardButton("• Watch Ad •", url="https://t.me/CornVideos4k")],
-            [InlineKeyboardButton("• Buy Premium Plan •", url="https://t.me/LookRex")]
-        ]
-        await message.reply(
-            "**📛 Ads Token Expired!**\n\n"
-            "✅ View 3 pages to reactivate your token for 1 day.\n"
-            "🚫 Avoid ads? Go premium!",
-            reply_markup=InlineKeyboardMarkup(ad_buttons)
-        )
-        return
-
-    await message.reply("✅ Token verified! You can now use the bot.")
-
-@app.on_callback_query(filters.regex("check_sub"))
-async def check_subscription(client, callback_query):
-    user_id = callback_query.from_user.id
-    if await is_subscribed(client, user_id):
-        await callback_query.message.edit("✅ You’re now verified! Use the bot freely.")
-        # After successful verification, add token to db
-        db[user_id] = {"expires": datetime.now() + timedelta(days=1)}
+    add_user(user_id)
+    args = message.text.split()
+    if len(args) > 1:
+        file_id = args[1]
+        file_data = get_file(file_id)
+        if file_data:
+            await message.reply_document(file_id, caption=f"📄 {file_data['file_name']}")
+        else:
+            await message.reply("❌ File not found.")
     else:
-        await callback_query.answer("❌ You still haven't joined the channels.", show_alert=True)
+        await message.reply("Welcome! Send me a file to store.")
 
-@app.on_message(filters.private & filters.command("get_token"))
-async def get_token_command(client, message):
+@bot.on_message(filters.private & (filters.document | filters.video | filters.photo))
+@subscription_required
+async def handle_file(client, message: Message):
     user_id = message.from_user.id
-    db[user_id] = {"expires": datetime.now() + timedelta(days=1)}
-    await message.reply("🎉 Token activated for 1 day!")
+    if user_id != OWNER_ID and user_id not in get_sudo_users():
+        return await message.reply("🚫 You are not allowed to upload files.")
 
-app.run()
+    media = message.document or message.video or message.photo
+    file_id = media.file_id
+    file_name = getattr(media, "file_name", "NoName")
+    add_file(file_id, file_name, user_id)
+
+    bot_username = (await client.get_me()).username
+    deep_link = f"https://t.me/{bot_username}?start={file_id}"
+
+    await message.reply(
+        f"✅ File saved as `{file_name}`.\n"
+        f"🔗 [Click here to access your file]({deep_link})",
+        disable_web_page_preview=True
+    )
+
+    await client.send_message(
+        LOG_GROUP_ID,
+        f"📥 File stored by `{user_id}`: `{file_name}`\n"
+        f"🔗 [Link]({deep_link})",
+        disable_web_page_preview=True
+    )
+
+@bot.on_message(filters.command("addch"))
+async def add_channel_command(client, message: Message):
+    user_id = message.from_user.id
+    if user_id != OWNER_ID and user_id not in get_sudo_users():
+        return await message.reply("🚫 You do not have permission to add channels.")
+
+    try:
+        slot, username = message.text.split()[1], message.text.split()[2]
+        add_channel(slot, username)
+        await message.reply(f"✅ Channel {username} added in slot {slot}.")
+    except IndexError:
+        await message.reply("⚠️ Usage: /addch <slot> <channel_username>")
+
+@bot.on_message(filters.command("rmch"))
+async def remove_channel_command(client, message: Message):
+    user_id = message.from_user.id
+    if user_id != OWNER_ID and user_id not in get_sudo_users():
+        return await message.reply("🚫 You do not have permission to remove channels.")
+
+    try:
+        slot = message.text.split()[1]
+        remove_channel(slot)
+        await message.reply(f"✅ Channel in slot {slot} removed.")
+    except IndexError:
+        await message.reply("⚠️ Usage: /rmch <slot>")
+
+@bot.on_message(filters.command("addsudo"))
+async def add_sudo(client, message: Message):
+    user_id = message.from_user.id
+    if user_id != OWNER_ID:
+        return await message.reply("🚫 Only the owner can add sudo users.")
+
+    try:
+        target_user = int(message.text.split()[1])
+        add_sudo_user(target_user)
+        await message.reply(f"✅ {target_user} added as SUDO.")
+    except (IndexError, ValueError):
+        await message.reply("⚠️ Usage: /addsudo <user_id>")
+
+@bot.on_message(filters.command("rmsudo"))
+async def remove_sudo(client, message: Message):
+    user_id = message.from_user.id
+    if user_id != OWNER_ID:
+        return await message.reply("🚫 Only the owner can remove sudo users.")
+
+    try:
+        target_user = int(message.text.split()[1])
+        remove_sudo_user(target_user)
+        await message.reply(f"✅ {target_user} removed from SUDO.")
+    except (IndexError, ValueError):
+        await message.reply("⚠️ Usage: /rmsudo <user_id>")
+
+@bot.on_message(filters.command("sudolist"))
+async def show_sudo_list(client, message: Message):
+    user_id = message.from_user.id
+    if user_id != OWNER_ID:
+        return await message.reply("🚫 Only the owner can view sudo users.")
+
+    sudo_list = get_sudo_users()
+    if not sudo_list:
+        return await message.reply("No SUDO users found.")
+    sudo_str = "\n".join([f"`{uid}`" for uid in sudo_list])
+    await message.reply(f"📝 SUDO Users List:\n\n{sudo_str}")
+
+@bot.on_message(filters.command("forceon"))
+async def force_on(client, message: Message):
+    user_id = message.from_user.id
+    if user_id != OWNER_ID:
+        return await message.reply("🚫 Only the owner can enable force subscription.")
+
+    set_force_check(True)
+    await message.reply("✅ Force subscription enabled.")
+
+@bot.on_message(filters.command("forceoff"))
+async def force_off(client, message: Message):
+    user_id = message.from_user.id
+    if user_id != OWNER_ID:
+        return await message.reply("🚫 Only the owner can disable force subscription.")
+
+    set_force_check(False)
+    await message.reply("✅ Force subscription disabled.")
+
+bot.run()
