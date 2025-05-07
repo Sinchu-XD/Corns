@@ -6,7 +6,6 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "7849290437:AAGsPd0m4de-bcNXYNvqb8fgBQ5eNHXyc
 MONGO_URL = os.getenv("MONGO_URL", "mongodb+srv://Sinchu:Sinchu@sinchu.qwijj.mongodb.net/?retryWrites=true&w=majority&appName=Sinchu")
 
 OWNER_IDS = [int(x.strip()) for x in os.getenv("OWNER_ID", "8091116698,7849290437").split(",")]
-OWNER_ID = OWNER_IDS[0]
 
 LOG_GROUP_ID = int(os.getenv("LOG_GROUP_ID", -1002287107269))
 
