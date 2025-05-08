@@ -14,31 +14,42 @@ load_dotenv()
 
 bot = Client("file_store_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# ✅ START command with deep link file support
 @bot.on_message(filters.command("start") & filters.private)
 @subscription_required
 async def start_command(client, message: Message):
     user_id = message.from_user.id
-    if user_id not in OWNER_IDS and user_id not in SUDO_USERS:
-        await message.reply("👋 Hello Admin!\n\n📩 Send me any file like image, document, or video and I’ll convert it into a shareable link.")
-    else:
-        main_chat = get_all_channels()
-        if main_chat:
-            await message.reply(
-                "🍿 You can get corn content here.",
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("🔗 View Content", url=main_chat)]]
-                )
+    channels = get_all_channels()
+    
+    # Check if owner/sudo and less than 2 channels
+    if user_id in OWNER_IDS or user_id in SUDO_USERS:
+        if len(channels) < 2:
+            return await message.reply("⚠️ Please add **at least 2 channels** using `/addch <slot> <@channel>` before using the bot.")
+        return await message.reply("👋 Hello Admin!\n\n📩 Send me any file like image, document, or video and I’ll convert it into a shareable link.")
+    
+    # For normal users
+    if channels:
+        # Try linking to first available channel
+        channel_link = f"https://t.me/{list(channels.values())[0]}"
+        await message.reply(
+            "🍿 You can get corn content here.",
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("🔗 View Content", url=channel_link)]]
             )
-        else:
-            await message.reply("❌ No content link set by admin.")
+        )
+    else:
+        await message.reply("❌ No content link set by admin.")
 
-# ✅ Save file and generate link
 @bot.on_message(filters.private & (filters.document | filters.video | filters.photo))
 @subscription_required
 async def handle_file(client, message: Message):
     user_id = message.from_user.id
-    if user_id not in OWNER_IDS and user_id not in SUDO_USERS:
+    channels = get_all_channels()
+    
+    # Restrict if not enough channels
+    if user_id in OWNER_IDS or user_id in SUDO_USERS:
+        if len(channels) < 2:
+            return await message.reply("⚠️ Please add **at least 2 channels** using `/addch <slot> <@channel>` before uploading files.")
+    else:
         return await message.reply("🚫 You are not allowed to upload files.")
 
     media = message.document or message.video or message.photo
@@ -62,6 +73,7 @@ async def handle_file(client, message: Message):
         f"🔗 [Link]({deep_link})",
         disable_web_page_preview=True
     )
+
 
 # ✅ Channel management commands
 @bot.on_message(filters.command("addch"))
