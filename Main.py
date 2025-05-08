@@ -74,6 +74,16 @@ async def handle_file(client, message: Message):
         disable_web_page_preview=True
     )
 
+@bot.on_message(filters.command("channels"))
+async def list_channels(client, message: Message):
+    if message.from_user.id not in OWNER_IDS and message.from_user.id not in SUDO_USERS:
+        return await message.reply("🚫 You don't have permission to view channels.")
+    channels = get_all_channels()
+    if not channels:
+        return await message.reply("📭 No channels configured.")
+    text = "\n".join([f"Slot `{slot}`: @{username}" for slot, username in channels.items()])
+    await message.reply(f"📡 Connected Channels:\n\n{text}")
+    
 
 # ✅ Channel management commands
 @bot.on_message(filters.command("addch"))
@@ -84,6 +94,14 @@ async def add_channel_command(client, message: Message):
 
     try:
         _, slot, username = message.text.split(maxsplit=2)
+        
+        channels = get_all_channels()  # 👈 Fetch current channels
+        if slot in channels:  # 👈 Check if slot already used
+            return await message.reply(
+                f"⚠️ Slot `{slot}` is already used for @{channels[slot]}.\n"
+                f"🧹 Use `/rmch {slot}` to remove it first."
+            )
+
         add_channel(slot, username)
         await message.reply(f"✅ Channel {username} added in slot {slot}.")
     except ValueError:
