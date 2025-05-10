@@ -1,6 +1,6 @@
 import os
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from dotenv import load_dotenv
 from Config import API_ID, API_HASH, BOT_TOKEN, OWNER_IDS, LOG_GROUP_ID, SUDO_USERS
 from Database import (
@@ -14,172 +14,175 @@ load_dotenv()
 
 bot = Client("file_store_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
+# 🚨 Helpers
+def is_admin(uid):
+    return uid in OWNER_IDS or uid in SUDO_USERS
+
+# 🟢 START COMMAND
 @bot.on_message(filters.command("start") & filters.private)
 @subscription_required
 async def start_command(client, message: Message):
     user_id = message.from_user.id
     channels = get_all_channels()
-    
-    # Check if owner/sudo and less than 2 channels
-    if user_id in OWNER_IDS or user_id in SUDO_USERS:
+
+    if is_admin(user_id):
         if len(channels) < 2:
-            return await message.reply("⚠️ Please add **at least 2 channels** using `/addch <slot> <@channel>` before using the bot.")
-        return await message.reply("👋 Hello Admin!\n\n📩 Send me any file like image, document, or video and I’ll convert it into a shareable link.")
-    
-    # For normal users
+            return await message.reply("⚠️ Add at least **2 channels** using:\n`/addch <slot> <@channel>`")
+        return await message.reply(
+            "👋 Welcome Admin!\n\n📤 Send any file to convert into a sharable link.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📡 View Channels", callback_data="view_channels")]])
+        )
+
     if channels:
-        # Try linking to first available channel
-        channel_link = f"https://t.me/{list(channels.values())[0]}"
+        channel_url = f"https://t.me/{list(channels.values())[0]}"
         await message.reply(
-            "🍿 You can get corn content here.",
-            reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton("🔗 View Content", url=channel_link)]]
-            )
+            "📥 Get files and content from our channels.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔗 Open Channel", url=channel_url)]])
         )
     else:
-        await message.reply("❌ No content link set by admin.")
+        await message.reply("❌ No content available. Try again later.")
 
-@bot.on_message(filters.private & (filters.document | filters.video | filters.photo))
+# 📤 FILE HANDLER
+@bot.on_message(filters.private & (filters.document | filters.video | filters.photo | filters.animation))
 @subscription_required
 async def handle_file(client, message: Message):
     user_id = message.from_user.id
-    channels = get_all_channels()
-    
-    # Restrict if not enough channels
-    if user_id in OWNER_IDS or user_id in SUDO_USERS:
-        if len(channels) < 2:
-            return await message.reply("⚠️ Please add **at least 2 channels** using `/addch <slot> <@channel>` before uploading files.")
-    else:
+    if not is_admin(user_id):
         return await message.reply("🚫 You are not allowed to upload files.")
 
-    media = message.document or message.video or message.photo
+    if len(get_all_channels()) < 2:
+        return await message.reply("⚠️ Please add at least **2 channels** using `/addch` first.")
+
+    media = message.document or message.video or message.photo or message.animation
     file_id = media.file_id
     file_name = getattr(media, "file_name", "Unnamed File")
 
     add_file(file_id, file_name, user_id)
-
     bot_username = (await client.get_me()).username
     deep_link = f"https://t.me/{bot_username}?start={file_id}"
 
     await message.reply(
-        f"✅ File saved as `{file_name}`.\n"
-        f"🔗 [Click here to access your file]({deep_link})",
+        f"✅ **Saved** as `{file_name}`\n🔗 [Open File Link]({deep_link})",
         disable_web_page_preview=True
     )
 
     await client.send_message(
         LOG_GROUP_ID,
-        f"📥 File stored by `{user_id}`: `{file_name}`\n"
-        f"🔗 [Link]({deep_link})",
+        f"📥 `{file_name}` uploaded by `{user_id}`\n🔗 [File Link]({deep_link})",
         disable_web_page_preview=True
     )
 
-@bot.on_message(filters.command("channels"))
-async def list_channels(client, message: Message):
-    if message.from_user.id not in OWNER_IDS and message.from_user.id not in SUDO_USERS:
-        return await message.reply("🚫 You don't have permission to view channels.")
-    channels = get_all_channels()
-    if not channels:
-        return await message.reply("📭 No channels configured.")
-    text = "\n".join([f"Slot `{slot}`: @{username}" for slot, username in channels.items()])
-    await message.reply(f"📡 Connected Channels:\n\n{text}")
-    
-
-# ✅ Channel management commands
+# 📋 CHANNEL MANAGEMENT
 @bot.on_message(filters.command("addch"))
 async def add_channel_command(client, message: Message):
-    user_id = message.from_user.id
-    if user_id not in OWNER_IDS and user_id not in SUDO_USERS:
-        return await message.reply("🚫 You do not have permission to add channels.")
+    if not is_admin(message.from_user.id):
+        return await message.reply("🚫 You can't add channels.")
 
     try:
         _, slot, username = message.text.split(maxsplit=2)
-        
-        channels = get_all_channels()  # 👈 Fetch current channels
-        if slot in channels:  # 👈 Check if slot already used
-            return await message.reply(
-                f"⚠️ Slot `{slot}` is already used for @{channels[slot]}.\n"
-                f"🧹 Use `/rmch {slot}` to remove it first."
-            )
-
+        channels = get_all_channels()
+        if slot in channels:
+            return await message.reply(f"⚠️ Slot `{slot}` is in use by @{channels[slot]}. Use `/rmch {slot}` first.")
         add_channel(slot, username)
-        await message.reply(f"✅ Channel {username} added in slot {slot}.")
+        await message.reply(f"✅ Added @{username} to slot `{slot}`.")
     except ValueError:
-        await message.reply("⚠️ Usage: /addch <slot> <channel_username>")
+        await message.reply("⚠️ Usage: `/addch <slot> <channel_username>`")
 
 @bot.on_message(filters.command("rmch"))
 async def remove_channel_command(client, message: Message):
-    user_id = message.from_user.id
-    if user_id not in OWNER_IDS and user_id not in SUDO_USERS:
-        return await message.reply("🚫 You do not have permission to remove channels.")
+    if not is_admin(message.from_user.id):
+        return await message.reply("🚫 You can't remove channels.")
 
     try:
         _, slot = message.text.split(maxsplit=1)
         remove_channel(slot)
-        await message.reply(f"✅ Channel in slot {slot} removed.")
+        await message.reply(f"✅ Removed channel from slot `{slot}`.")
     except ValueError:
-        await message.reply("⚠️ Usage: /rmch <slot>")
+        await message.reply("⚠️ Usage: `/rmch <slot>`")
 
-# ✅ SUDO management
+@bot.on_message(filters.command("channels"))
+async def list_channels(client, message: Message):
+    if not is_admin(message.from_user.id):
+        return await message.reply("🚫 You can't view channels.")
+
+    channels = get_all_channels()
+    if not channels:
+        return await message.reply("📭 No channels added.")
+    
+    text = "\n".join([f"🔢 Slot `{k}` → @{v}" for k, v in channels.items()])
+    await message.reply(f"📡 **Connected Channels:**\n\n{text}")
+
+# 🧑‍💻 SUDO MANAGEMENT
 @bot.on_message(filters.command("addsudo"))
 async def add_sudo(client, message: Message):
-    user_id = message.from_user.id
-    if user_id not in OWNER_IDS:
-        return await message.reply("🚫 Only the owner can add sudo users.")
-
+    if message.from_user.id not in OWNER_IDS:
+        return await message.reply("🚫 Only owner can add sudo users.")
     try:
-        _, target = message.text.split(maxsplit=1)
-        target_user = int(target)
-        add_sudo_user(target_user)
-        await message.reply(f"✅ `{target_user}` added as SUDO.")
-    except (ValueError, IndexError):
-        await message.reply("⚠️ Usage: /addsudo <user_id>")
+        _, user_id = message.text.split(maxsplit=1)
+        add_sudo_user(int(user_id))
+        await message.reply(f"✅ `{user_id}` added as sudo.")
+    except Exception:
+        await message.reply("⚠️ Usage: `/addsudo <user_id>`")
 
 @bot.on_message(filters.command("rmsudo"))
 async def remove_sudo(client, message: Message):
-    user_id = message.from_user.id
-    if user_id not in OWNER_IDS:
-        return await message.reply("🚫 Only the owner can remove sudo users.")
-
+    if message.from_user.id not in OWNER_IDS:
+        return await message.reply("🚫 Only owner can remove sudo users.")
     try:
-        _, target = message.text.split(maxsplit=1)
-        target_user = int(target)
-        remove_sudo_user(target_user)
-        await message.reply(f"✅ `{target_user}` removed from SUDO.")
-    except (ValueError, IndexError):
-        await message.reply("⚠️ Usage: /rmsudo <user_id>")
+        _, user_id = message.text.split(maxsplit=1)
+        remove_sudo_user(int(user_id))
+        await message.reply(f"✅ `{user_id}` removed from sudo.")
+    except Exception:
+        await message.reply("⚠️ Usage: `/rmsudo <user_id>`")
 
 @bot.on_message(filters.command("sudolist"))
 async def show_sudo_list(client, message: Message):
-    user_id = message.from_user.id
-    if user_id not in OWNER_IDS:
-        return await message.reply("🚫 Only the owner can view sudo users.")
+    if message.from_user.id not in OWNER_IDS:
+        return await message.reply("🚫 Only owner can view sudo users.")
+    sudo = get_sudo_users()
+    if not sudo:
+        return await message.reply("❌ No sudo users.")
+    await message.reply("👤 **SUDO Users:**\n\n" + "\n".join([f"• `{i}`" for i in sudo]))
 
-    sudo_list = get_sudo_users()
-    if not sudo_list:
-        return await message.reply("No SUDO users found.")
-
-    sudo_text = "\n".join([f"• `{uid}`" for uid in sudo_list])
-    await message.reply(f"📝 SUDO Users:\n\n{sudo_text}")
-
-# ✅ Force subscription toggle
+# 🔒 FORCE SUBSCRIPTION
 @bot.on_message(filters.command("forceon"))
 async def force_on(client, message: Message):
-    user_id = message.from_user.id
-    if user_id not in OWNER_IDS:
-        return await message.reply("🚫 Only the owner can enable force subscription.")
-
+    if message.from_user.id not in OWNER_IDS:
+        return await message.reply("🚫 Only owner can enable force.")
     set_force_check(True)
     await message.reply("✅ Force subscription enabled.")
 
 @bot.on_message(filters.command("forceoff"))
 async def force_off(client, message: Message):
-    user_id = message.from_user.id
-    if user_id not in OWNER_IDS:
-        return await message.reply("🚫 Only the owner can disable force subscription.")
-
+    if message.from_user.id not in OWNER_IDS:
+        return await message.reply("🚫 Only owner can disable force.")
     set_force_check(False)
     await message.reply("✅ Force subscription disabled.")
 
-# ✅ Run bot
+# 🆘 HELP
+@bot.on_message(filters.command("help"))
+async def help_command(client, message: Message):
+    help_text = """
+📚 **Bot Commands:**
+
+👤 **User:**
+• `/start` - Start bot & view content
+
+🛠 **Admin:**
+• `/addch <slot> <@channel>` - Add a channel
+• `/rmch <slot>` - Remove channel
+• `/channels` - List channels
+
+🔐 **Sudo Control:**
+• `/addsudo <user_id>` - Add sudo
+• `/rmsudo <user_id>` - Remove sudo
+• `/sudolist` - List sudo users
+
+📌 **Other:**
+• `/forceon` - Enable force subscription
+• `/forceoff` - Disable force subscription
+"""
+    await message.reply(help_text)
+
+# ✅ RUN BOT
 bot.run()
