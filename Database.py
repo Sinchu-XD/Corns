@@ -46,3 +46,10 @@ def save_file(file_id, user_id, link):
 
 def get_user_files(user_id):
     return files_db.find({"user_id": user_id})
+
+def set_main_channel(channel: str):
+    db.config.update_one({"_id": "main_channel"}, {"$set": {"channel": channel}}, upsert=True)
+
+def get_main_channel():
+    doc = db.config.find_one({"_id": "main_channel"})
+    return doc["channel"] if doc else None
