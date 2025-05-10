@@ -41,7 +41,6 @@ async def start_command(client, message: Message):
         else:
             await message.reply("Welcome to the bot! Send a file to get started.")
 
-# 🟢 START COMMAND
 @bot.on_message(filters.command("start") & filters.private)
 @subscription_required
 async def start_command(client, message: Message):
@@ -56,14 +55,18 @@ async def start_command(client, message: Message):
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📡 View Channels", callback_data="view_channels")]])
         )
 
+    # 🔽 NEW Non-Admin Logic
     if channels:
-        channel_url = f"https://t.me/{list(channels.values())[0]}"
+        keyboard = [
+            [InlineKeyboardButton(f"📡 {slot.upper()} → @{username}", url=f"https://t.me/{username}")]
+            for slot, username in channels.items()
+        ]
         await message.reply(
-            "📥 Get files and content from our channels.",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔗 Open Channel", url=channel_url)]])
+            "📥 Join our channels to access shared content:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
     else:
-        await message.reply("❌ No content available. Try again later.")
+        await message.reply("❌ No channels available. Please try again later.")
 
 # 📤 FILE HANDLER
 @bot.on_message(filters.private & (filters.document | filters.video | filters.photo | filters.animation))
