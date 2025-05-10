@@ -1,7 +1,7 @@
 from pymongo import MongoClient
-import os
 from Config import MONGO_URL
 
+# Initialize MongoDB client and collections
 client = MongoClient(MONGO_URL)
 db = client["file_store_bot"]
 
@@ -11,48 +11,53 @@ sudo_users_collection = db["sudo_users"]
 channels_collection = db["channels"]
 settings_collection = db["settings"]
 
-# Add a file to the database
-def add_file(file_id, file_name, user_id):
+# ➤ Save a file's metadata
+def add_file(file_id: str, file_name: str, user_id: int):
     try:
-        files_collection.insert_one({"file_id": file_id, "file_name": file_name, "user_id": user_id})
-        print(f"File {file_name} added successfully to the database.")
+        files_collection.update_one(
+            {"file_id": file_id},
+            {"$set": {"file_name": file_name, "user_id": user_id}},
+            upsert=True
+        )
     except Exception as e:
-        print(f"Error adding file to database: {e}")
+        print(f"Error adding file: {e}")
 
-# Get file details by file_id
-def get_file(file_id):
+# ➤ Retrieve file metadata by file_id
+def get_file(file_id: str):
     try:
-        file = files_collection.find_one({"file_id": file_id})
-        return file
+        return files_collection.find_one({"file_id": file_id})
     except Exception as e:
-        print(f"Error fetching file from database: {e}")
+        print(f"Error retrieving file: {e}")
         return None
 
-# Add a user to the users collection
-def add_user(user_id):
+# ➤ Add or update a user
+def add_user(user_id: int):
     try:
-        users_collection.update_one({"user_id": user_id}, {"$set": {"user_id": user_id}}, upsert=True)
-        print(f"User {user_id} added/updated in the database.")
+        users_collection.update_one(
+            {"user_id": user_id},
+            {"$set": {"user_id": user_id}},
+            upsert=True
+        )
     except Exception as e:
-        print(f"Error adding user to database: {e}")
+        print(f"Error adding user: {e}")
 
-# Add a sudo user to the sudo_users collection
-def add_sudo_user(user_id):
+# ➤ Sudo Users
+def add_sudo_user(user_id: int):
     try:
-        sudo_users_collection.update_one({"user_id": user_id}, {"$set": {"user_id": user_id}}, upsert=True)
-        print(f"Sudo user {user_id} added/updated.")
+        sudo_users_collection.update_one(
+            {"user_id": user_id},
+            {"$set": {"user_id": user_id}},
+            upsert=True
+        )
     except Exception as e:
-        print(f"Error adding sudo user to database: {e}")
+        print(f"Error adding sudo user: {e}")
 
-# Remove a sudo user from the sudo_users collection
-def remove_sudo_user(user_id):
+def remove_sudo_user(user_id: int):
     try:
         sudo_users_collection.delete_one({"user_id": user_id})
-        print(f"Sudo user {user_id} removed.")
     except Exception as e:
-        print(f"Error removing sudo user from database: {e}")
+        print(f"Error removing sudo user: {e}")
 
-# Get all sudo users from the sudo_users collection
 def get_sudo_users():
     try:
         return [user["user_id"] for user in sudo_users_collection.find()]
@@ -60,43 +65,45 @@ def get_sudo_users():
         print(f"Error fetching sudo users: {e}")
         return []
 
-# Add a channel to the channels collection
-def add_channel(slot, username):
+# ➤ Channels
+def add_channel(slot: str, username: str):
     try:
-        channels_collection.update_one({"slot": slot}, {"$set": {"username": username}}, upsert=True)
-        print(f"Channel {username} added/updated in slot {slot}.")
+        channels_collection.update_one(
+            {"slot": slot},
+            {"$set": {"username": username}},
+            upsert=True
+        )
     except Exception as e:
-        print(f"Error adding channel to database: {e}")
+        print(f"Error adding channel: {e}")
 
-# Remove a channel from the channels collection
-def remove_channel(slot):
+def remove_channel(slot: str):
     try:
         channels_collection.delete_one({"slot": slot})
-        print(f"Channel in slot {slot} removed.")
     except Exception as e:
-        print(f"Error removing channel from database: {e}")
+        print(f"Error removing channel: {e}")
 
-# Get all channels from the channels collection
 def get_all_channels():
     try:
         return {channel["slot"]: channel["username"] for channel in channels_collection.find()}
     except Exception as e:
-        print(f"Error fetching all channels: {e}")
+        print(f"Error fetching channels: {e}")
         return {}
 
-# Set the force check value in the settings collection
+# ➤ Force Check Setting
 def set_force_check(value: bool):
     try:
-        settings_collection.update_one({"_id": "force_check"}, {"$set": {"value": value}}, upsert=True)
-        print(f"Force check setting set to {value}.")
+        settings_collection.update_one(
+            {"_id": "force_check"},
+            {"$set": {"value": value}},
+            upsert=True
+        )
     except Exception as e:
-        print(f"Error setting force check in database: {e}")
+        print(f"Error setting force_check: {e}")
 
-# Get the force check value from the settings collection
 def get_force_check():
     try:
         setting = settings_collection.find_one({"_id": "force_check"})
         return setting["value"] if setting else False
     except Exception as e:
-        print(f"Error fetching force check setting: {e}")
+        print(f"Error getting force_check: {e}")
         return False
