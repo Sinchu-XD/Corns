@@ -18,6 +18,29 @@ bot = Client("file_store_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_T
 def is_admin(uid):
     return uid in OWNER_IDS or uid in SUDO_USERS
 
+# 🟢 START COMMAND: Handle deep links
+@bot.on_message(filters.command("start"))
+async def start_command(client, message: Message):
+    if message.text.startswith("/start"):
+        args = message.text.split(" ", 1)
+        if len(args) > 1:
+            file_id = args[1]
+            # Fetch file details from database using the file_id
+            file_data = get_file(file_id)  # assuming you have a function to fetch file info
+
+            if file_data:
+                file_name = file_data['file_name']
+                file_link = file_data['file_link']
+                # Send the file details to the user
+                await message.reply(
+                    f"Here is your file: `{file_name}`\n🔗 [Download File]({file_link})",
+                    disable_web_page_preview=True
+                )
+            else:
+                await message.reply("⚠️ File not found!")
+        else:
+            await message.reply("Welcome to the bot! Send a file to get started.")
+
 # 🟢 START COMMAND
 @bot.on_message(filters.command("start") & filters.private)
 @subscription_required
@@ -47,8 +70,6 @@ async def start_command(client, message: Message):
 @subscription_required
 async def handle_file(client, message: Message):
     user_id = message.from_user.id
-    mention = message.from_user.mention
-
     if not is_admin(user_id):
         return await message.reply("🚫 You are not allowed to upload files.")
 
@@ -57,17 +78,7 @@ async def handle_file(client, message: Message):
 
     media = message.document or message.video or message.photo or message.animation
     file_id = media.file_id
-
-    if hasattr(media, "file_name"):
-        file_name = media.file_name
-    elif message.photo:
-        file_name = f"Photo_{message.id}.jpg"
-    elif message.video:
-        file_name = f"Video_{message.id}.mp4"
-    elif message.animation:
-        file_name = f"GIF_{message.id}.mp4"
-    else:
-        file_name = f"File_{message.id}"
+    file_name = getattr(media, "file_name", f"Unnamed File")
 
     add_file(file_id, file_name, user_id)
     bot_username = (await client.get_me()).username
@@ -80,7 +91,7 @@ async def handle_file(client, message: Message):
 
     await client.send_message(
         LOG_GROUP_ID,
-        f"📥 `{file_name}` uploaded by {mention}\n🔗 [File Link]({deep_link})",
+        f"📥 `{file_name}` uploaded by [{message.from_user.first_name} {message.from_user.last_name or ''}](tg://user?id={user_id})\n🔗 [File Link]({deep_link})",
         disable_web_page_preview=True
     )
 
@@ -198,3 +209,4 @@ async def help_command(client, message: Message):
 
 # ✅ RUN BOT
 bot.run()
+                    
