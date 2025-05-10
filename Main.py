@@ -49,24 +49,29 @@ async def start_command(client, message: Message):
 
     if is_admin(user_id):
         if len(channels) < 2:
-            return await message.reply("⚠️ Add at least **2 channels** using:\n`/addch <slot> <@channel>`")
+            return await message.reply(
+                "⚠️ You need to add at least **2 channels** using:\n`/addch <slot> <@channel>`"
+            )
         return await message.reply(
             "👋 Welcome Admin!\n\n📤 Send any file to convert into a sharable link.",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📡 View Channels", callback_data="view_channels")]])
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("📡 View Channels", callback_data="view_channels")]]
+            )
         )
 
-    # 🔽 NEW Non-Admin Logic
+    # For NON-ADMIN users
     if channels:
         keyboard = [
-            [InlineKeyboardButton(f"📡 {slot.upper()} → @{username}", url=f"https://t.me/{username}")]
+            [InlineKeyboardButton(f"📡 Join @{username}", url=f"https://t.me/{username}")]
             for slot, username in channels.items()
         ]
-        await message.reply(
-            "📥 Join our channels to access shared content:",
+        return await message.reply(
+            "📥 To access the content, please join all our channels:",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     else:
-        await message.reply("❌ No channels available. Please try again later.")
+        return await message.reply("❌ No channels are configured yet. Please try again later.")
+
 
 # 📤 FILE HANDLER
 @bot.on_message(filters.private & (filters.document | filters.video | filters.photo | filters.animation))
