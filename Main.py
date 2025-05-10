@@ -47,6 +47,8 @@ async def start_command(client, message: Message):
 @subscription_required
 async def handle_file(client, message: Message):
     user_id = message.from_user.id
+    mention = message.from_user.mention
+
     if not is_admin(user_id):
         return await message.reply("🚫 You are not allowed to upload files.")
 
@@ -55,7 +57,17 @@ async def handle_file(client, message: Message):
 
     media = message.document or message.video or message.photo or message.animation
     file_id = media.file_id
-    file_name = getattr(media, "file_name", "Unnamed File")
+
+    if hasattr(media, "file_name"):
+        file_name = media.file_name
+    elif message.photo:
+        file_name = f"Photo_{message.id}.jpg"
+    elif message.video:
+        file_name = f"Video_{message.id}.mp4"
+    elif message.animation:
+        file_name = f"GIF_{message.id}.mp4"
+    else:
+        file_name = f"File_{message.id}"
 
     add_file(file_id, file_name, user_id)
     bot_username = (await client.get_me()).username
@@ -68,7 +80,7 @@ async def handle_file(client, message: Message):
 
     await client.send_message(
         LOG_GROUP_ID,
-        f"📥 `{file_name}` uploaded by `{user_id}`\n🔗 [File Link]({deep_link})",
+        f"📥 `{file_name}` uploaded by {mention}\n🔗 [File Link]({deep_link})",
         disable_web_page_preview=True
     )
 
