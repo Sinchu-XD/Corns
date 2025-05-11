@@ -4,19 +4,19 @@ from Bot import bot
 from Config import Config
 from Decorators import subscription_required, check_subscription
 from Database import get_channels, get_sudo_list
-from datetime import datetime
 
-# ✅ Async function to check if user is admin or sudo
+# ✅ Admin check
 async def is_admin(uid: int) -> bool:
     sudo_users = await get_sudo_list()
     return uid == Config.OWNER_ID or uid in sudo_users
 
 @bot.on_message(filters.command("start") & filters.private)
-@subscription_required
+@subscription_required  # ✅ Always check forced join
 async def start_command(client, message: Message):
     user_id = message.from_user.id
     channels = await get_channels()
 
+    # If user is admin
     if await is_admin(user_id):
         if isinstance(channels, dict) and len(channels) < 2:
             return await message.reply(
@@ -29,8 +29,9 @@ async def start_command(client, message: Message):
             )
         )
 
-    # For NON-ADMIN users
-    if channels:
+    # For non-admin users
+    # If not subscribed yet, show join buttons again
+    if not await check_subscription(client, user_id):
         keyboard = []
         if isinstance(channels, dict):
             for slot, username in channels.items():
@@ -39,17 +40,18 @@ async def start_command(client, message: Message):
             for username in channels:
                 keyboard.append([InlineKeyboardButton(f"📡 Join @{username}", url=f"https://t.me/{username}")])
         else:
-            return await message.reply("❌ Invalid channels format. Please contact admin.")
+            return await message.reply("❌ Invalid channel configuration.")
 
-        # ✅ Add "I Joined" button
         keyboard.append([InlineKeyboardButton("✅ I Joined", callback_data="check_join")])
 
         return await message.reply(
-            "📥 To access the content, please join all our channels:",
+            "📥 To access the content, please join all required channels:",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
-    else:
-        return await message.reply("❌ No channels are configured yet. Please try again later.")
+
+    # If already subscribed
+    return await message.reply("✅ Welcome! You're verified..")
+
 
 @bot.on_callback_query(filters.regex("check_join"))
 async def recheck_subscription(client, callback_query: CallbackQuery):
