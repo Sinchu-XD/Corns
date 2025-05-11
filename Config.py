@@ -9,6 +9,6 @@ class Config:
     MONGO_URI = os.getenv("MONGO_URL", "mongodb+srv://Sinchu:Sinchu@sinchu.qwijj.mongodb.net/?retryWrites=true&w=majority&appName=Sinchu")
 
     OWNER_ID = int(os.environ.get("OWNER_ID", "7862043458"))  # Your Telegram user ID
-    LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", -1002287107269))
+    LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", -1002362380968))
     
     BOT_USERNAME = "CornHub69Bot"
