@@ -11,7 +11,18 @@ from bson import ObjectId
 db = MongoClient(Config.MONGO_URI).RichBot
 sudo_col = db.sudo_users
 settings_collection = db["settings"]
+users_col = db.users
 
+# ✅ Add user to DB
+async def add_user(user_id: int, first_name: str, username: str = None):
+    if not users_col.find_one({"user_id": user_id}):
+        users_col.insert_one({
+            "user_id": user_id,
+            "first_name": first_name,
+            "username": username,
+            "joined_on": datetime.utcnow()
+        })
+        
 async def add_sudo(user_id: int):
     if not sudo_col.find_one({"user_id": user_id}):
         sudo_col.insert_one({"user_id": user_id})
