@@ -6,7 +6,7 @@ from Bot import bot
 from Database import add_channel, remove_channel, get_channels
 from Decorators import owner_or_sudo
 
-@bot.on_message(filters.command("addchannel") & owner_or_sudo)
+@bot.on_message(filters.command("addchannel") & owner_or_sudo))
 async def add_channel_cmd(c: Client, m: Message):
     if len(m.command) < 2:
         return await m.reply("Usage: `/addchannel @channelusername`")
