@@ -1,84 +1,47 @@
-# Plugins/start.py
+# plugins/start.py
 
 from pyrogram import Client, filters
+from Main import bot
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from Config import Config
-from Database import get_all_channels, channels_exist, is_sudo, get_main_channel
-from pyrogram.errors import UserNotParticipant
+from Config.Config import OWNER_ID, LOG_GROUP_ID
+from Decorators import check_user_joined
+from Database import get_channels, get_sudo_list
+from Decorators import owner_or_sudo
+from datetime import datetime
 
-LOG_CHANNEL = Config.LOG_CHANNEL_ID
+@bot.on_message(filters.command("start"))
+async def start_bot(client: Client, message: Message):
+    user_id = message.from_user.mention
+    channels = await get_channels()
+    sudoers = await get_sudo_list()
 
-# Build join buttons
-def build_join_buttons(channels):
-    buttons = []
-    for ch in channels:
-        buttons.append([InlineKeyboardButton("🔗 Join", url=f"https://t.me/" + ch.replace("@", ""))])
-    buttons.append([InlineKeyboardButton("✅ I've Joined", callback_data="check_join")])
-    return InlineKeyboardMarkup(buttons)
-
-@Client.on_message(filters.command("start") & filters.private)
-async def start(bot, message: Message):
-    user = message.from_user
-    uid = user.id
-
-    # Log start
+    # log start
     try:
-        await bot.send_message(LOG_CHANNEL, f"👤 [{user.first_name}](tg://user?id={uid}) (`{uid}`) used /start")
+        await client.send_message(
+            LOG_GROUP_ID,
+            f"👤 User : {user_id} started the bot.\n🕒 `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`",
+        )
     except:
         pass
 
-    # Are channels added?
-    channels = get_all_channels()
-    if not channels:
-        return await message.reply("⚠️ No channels configured. Please ask the owner to /addchannel first.")
+    # if less than 2 channels
+    if len(channels) < 2:
+        if user_id in sudoers or user_id == OWNER_ID:
+            return await message.reply("⚠️ Add at least 2 channels using `/addchannel`.")
+        return await message.reply("⚠️ Bot is under setup. Ask the owner to configure channels.")
 
-    # Check if user joined all channels
-    not_joined = []
-    for ch in channels:
-        try:
-            await bot.get_chat_member(ch, uid)
-        except UserNotParticipant:
-            not_joined.append(ch)
-
-    if not_joined:
+    # check if joined all
+    joined = await check_user_joined(client, user_id)
+    if not joined:
+        buttons = [[InlineKeyboardButton("✅ Joined All", callback_data="check_join")]]
+        for ch in channels:
+            buttons.insert(0, [InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.replace('@', '')}")])
         return await message.reply(
-            "📛 Please join all channels to use this bot.",
-            reply_markup=build_join_buttons(not_joined)
+            "**🔒 Please join all required channels to use the bot.**",
+            reply_markup=InlineKeyboardMarkup(buttons)
         )
 
-    # If joined all → show message based on role
-    if is_sudo(uid):
-        await message.reply(
-            "✅ All channels joined!\n\n🔐 You are authorized. Send me a photo, video or document to get a sharable link."
-        )
-    else:
-        await message.reply("✅ All channels joined!\n\nThanks.")
-        main_channel = get_main_channel()
-        if main_channel:
-            await message.reply(
-                "👇 Visit Our Main Channel",
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("📢 Main Channel", url=f"https://t.me/{main_channel.replace('@','')}")]]
-                )
-            )
-
-@Client.on_callback_query(filters.regex("check_join"))
-async def check_joined(bot, callback):
-    uid = callback.from_user.id
-    channels = get_all_channels()
-    not_joined = []
-
-    for ch in channels:
-        try:
-            await bot.get_chat_member(ch, uid)
-        except UserNotParticipant:
-            not_joined.append(ch)
-
-    if not_joined:
-        await callback.answer("❌ You still haven't joined all required channels.", show_alert=True)
-    else:
-        if is_sudo(uid):
-            await callback.message.edit("✅ All channels joined!\n\n🔐 You can now send a file.")
-        else:
-            await callback.message.edit("✅ Channels joined!\n\n⚠️ But only Admins/Sudo can use this bot to upload files.")
-          
+    # access granted
+    await message.reply(
+        "✅ You're verified!\n\nNow send me a **File** (Photo, Video, or Document) to get a direct link.",
+    )
