@@ -15,7 +15,7 @@ async def start_bot(client: Client, message: Message):
 
     # Log start
     try:
-        await client.send_message(
+        await bot.send_message(
             Config.LOG_GROUP_ID,
             f"👤 User : {mention} started the bot.\n🕒 `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`",
         )
