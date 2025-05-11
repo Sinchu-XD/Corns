@@ -1,10 +1,10 @@
 # helpers/filters.py
 
 from pyrogram import filters
-from Config.Config import OWNER_ID
+from Config import Config
 
 def owner_only(_, __, m):
-    return m.from_user and m.from_user.id == OWNER_ID
+    return m.from_user and m.from_user.id == Config.OWNER_ID
 
 owner_only = filters.create(owner_only)
 
