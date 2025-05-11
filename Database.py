@@ -50,3 +50,9 @@ async def save_file(user_id: int, file_id: str, file_type: str):
 async def get_file_by_id(file_id: str):
     return files_col.find_one({"_id": ObjectId(file_id)})
     
+async def set_force_check(value: bool):
+    settings_collection.update_one({"_id": "force_check"}, {"$set": {"value": True}}, upsert=True)
+
+async def get_force_check():
+    setting = settings_collection.find_one({"_id": "force_check"})
+    return setting["value"] if setting else False
