@@ -2,11 +2,11 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from Bot import bot
 from Config import Config
-from Decorators import subscription_required
+from Decorators import subscription_required, check_subscription
 from Database import get_channels, get_sudo_list
 from datetime import datetime
 
-# 🔧 Make this async to await get_sudo_list()
+# ✅ Async function to check if user is admin or sudo
 async def is_admin(uid: int) -> bool:
     sudo_users = await get_sudo_list()
     return uid == Config.OWNER_ID or uid in sudo_users
@@ -18,7 +18,7 @@ async def start_command(client, message: Message):
     channels = await get_channels()
 
     if await is_admin(user_id):
-        if len(channels) < 2:
+        if isinstance(channels, dict) and len(channels) < 2:
             return await message.reply(
                 "⚠️ You need to add at least **2 channels** using:\n`/addch <slot> <@channel>`"
             )
@@ -31,19 +31,18 @@ async def start_command(client, message: Message):
 
     # For NON-ADMIN users
     if channels:
-        try:
-            # If channels is a dict: {slot: channel_username}
-            keyboard = [
-                [InlineKeyboardButton(f"📡 Join @{username}", url=f"https://t.me/{username}")]
-                for slot, username in channels.items()
-            ]
-        except AttributeError:
-            # If channels is a list of channel usernames
-            keyboard = [
-                [InlineKeyboardButton(f"📡 Join @{username}", url=f"https://t.me/{username}")]
-                for username in channels
-                keyboard.append([InlineKeyboardButton("✅ I Joined", callback_data="check_join")])
-            ]
+        keyboard = []
+        if isinstance(channels, dict):
+            for slot, username in channels.items():
+                keyboard.append([InlineKeyboardButton(f"📡 Join @{username}", url=f"https://t.me/{username}")])
+        elif isinstance(channels, list):
+            for username in channels:
+                keyboard.append([InlineKeyboardButton(f"📡 Join @{username}", url=f"https://t.me/{username}")])
+        else:
+            return await message.reply("❌ Invalid channels format. Please contact admin.")
+
+        # ✅ Add "I Joined" button
+        keyboard.append([InlineKeyboardButton("✅ I Joined", callback_data="check_join")])
 
         return await message.reply(
             "📥 To access the content, please join all our channels:",
@@ -59,4 +58,3 @@ async def recheck_subscription(client, callback_query: CallbackQuery):
         await callback_query.message.edit("✅ You're successfully verified! You can now use the bot.")
     else:
         await callback_query.answer("🚫 You haven't joined all channels yet.", show_alert=True)
-        
