@@ -7,7 +7,7 @@ from Database import get_channels, get_sudo_list
 from datetime import datetime
 
 def is_admin(uid):
-    return uid in OWNER_ID or uid in get_sudo_list()
+    return uid in Config.OWNER_ID or uid in get_sudo_list()
     
 @bot.on_message(filters.command("start") & filters.private)
 @subscription_required
