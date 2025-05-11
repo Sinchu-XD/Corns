@@ -45,3 +45,15 @@ async def start_bot(client: Client, message: Message):
     await message.reply(
         "✅ You're verified!\n\nNow send me a **File** (Photo, Video, or Document) to get a direct link.",
     )
+
+from pyrogram.types import CallbackQuery
+
+@bot.on_callback_query(filters.regex("check_join"))
+async def recheck_join(client: Client, callback_query: CallbackQuery):
+    user_id = callback_query.from_user.id
+    joined = await check_user_joined(client, user_id)
+    if not joined:
+        return await callback_query.answer("❌ You still haven't joined all channels!", show_alert=True)
+
+    await callback_query.message.edit("✅ You're verified!\nNow send a File to get its link.")
+    
