@@ -1,13 +1,14 @@
+# Plugins/start.py
+
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from Bot import bot
 from Config import Config
-from Decorators import require_join, owner_or_sudo
-from Decorators import send_join_prompt
+from Database import check_user_joined
 from Database import get_channels, get_sudo_list
 from datetime import datetime
 
-@bot.on_message(filters.command("start") & filters.private & require_join)
+@bot.on_message(filters.command("start") & filters.private)
 async def start_bot(client: Client, message: Message):
     user_id = message.from_user.id
     mention = message.from_user.mention
@@ -23,12 +24,25 @@ async def start_bot(client: Client, message: Message):
     except:
         pass
 
-    # If channels not configured
+    # Check if bot is configured
     if not channels or len(channels) < 2:
         if user_id == Config.OWNER_ID or user_id in sudoers:
             return await message.reply("⚠️ Add at least 2 channels using `/addchannel` to make the bot functional.")
         return await message.reply("⚠️ Bot is under setup. Please wait until the owner configures it.")
 
+    # Check user join status
+    joined = await check_user_joined(client, user_id)
+    if not joined:
+        buttons = [[InlineKeyboardButton("✅ I’ve Joined", callback_data="check_join")]]
+        for ch in channels:
+            buttons.insert(0, [InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.replace('@', '')}")])
+
+        return await message.reply(
+            "**🔒 Please join all required channels to continue using this bot.**",
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+
+    # Passed the join check
     await message.reply(
         "✅ You're verified!\n\nNow send me a **File** (Photo, Video, or Document) to get a direct link."
     )
