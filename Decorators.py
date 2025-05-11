@@ -31,7 +31,7 @@ from Config import Config
 
 async def check_subscription(bot, user_id: int) -> bool:
     channels = await get_channels()
-    for _, username in channels.items():
+    for channel in channels:
         try:
             member = await bot.get_chat_member(username, user_id)
             if member.status not in [ChatMemberStatus.MEMBER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
@@ -57,7 +57,7 @@ def subscription_required(func):
         if user_id == Config.OWNER_ID or user_id in sudo_users:
             return await func(client, update)
 
-        if not get_force_check():
+        if not await get_force_check():
             return await func(client, update)
 
         if not await check_subscription(client, user_id):
