@@ -2,7 +2,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from Main import bot
+from Bot import bot
 from Database import add_channel, remove_channel, get_channels
 from Decorators import owner_or_sudo
 
