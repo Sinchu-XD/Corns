@@ -5,7 +5,7 @@ from Bot import bot
 from Config import Config
 from Decorators import owner_or_sudo
 
-@bot.on_message(filters.private & filters.group & filters.media & owner_or_sudo)
+@bot.on_message(filters.private & filters.media & owner_or_sudo & filters.(Config.LOG_CHANNEL_ID))
 async def handle_file(c: Client, m: Message):
     media = m.photo or m.video or m.document
     if not media:
