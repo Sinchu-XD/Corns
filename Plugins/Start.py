@@ -2,30 +2,26 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from Bot import bot
 from Config import Config
-from Database import get_channels, get_sudo_list
+from Database import get_channels
 from datetime import datetime
 
 @bot.on_message(filters.private & filters.command("start"))
-async def start(client, message: Message):
+async def start(client, message):
     user_id = message.from_user.id
     not_joined = []
     channels = await get_channels()
-    
+
     for channel in channels:
         try:
-            member = await client.get_chat_member(channel, user_id)
-            # Debugging line to log member's status
-            print(f"User {user_id} status in {channel}: {member.status}")
+            member = await client.get_chat_member(f"@{channel}", user_id)  # Prefix with '@' here for checking membership
             if member.status not in ["member", "administrator", "creator"]:
                 not_joined.append(channel)
-        except Exception as e:
-            # Log the error for better debugging
-            print(f"Error fetching member status for {channel}: {e}")
+        except:
             not_joined.append(channel)
 
     if not_joined:
         buttons = [
-            [InlineKeyboardButton(f"📢 Join {ch}", url=f"https://t.me/{ch}")]
+            [InlineKeyboardButton(f"📢 Join @{ch}", url=f"https://t.me/{ch}")]  # Use '@' for the button URL
             for ch in not_joined
         ]
         buttons.append([InlineKeyboardButton("✅ I've Joined", callback_data="check_join")])
@@ -35,21 +31,17 @@ async def start(client, message: Message):
 
 # Callback check
 @bot.on_callback_query(filters.regex("check_join"))
-async def check_join(client, callback_query: CallbackQuery):
+async def check_join(client, callback_query):
     user_id = callback_query.from_user.id
     not_joined = []
     channels = await get_channels()
-    
+
     for channel in channels:
         try:
-            member = await client.get_chat_member(channel, user_id)
-            # Debugging line to log member's status
-            print(f"User {user_id} status in {channel}: {member.status}")
+            member = await client.get_chat_member(f"@{channel}", user_id)
             if member.status not in ["member", "administrator", "creator"]:
                 not_joined.append(channel)
-        except Exception as e:
-            # Log the error for better debugging
-            print(f"Error fetching member status for {channel}: {e}")
+        except:
             not_joined.append(channel)
 
     if not_joined:
