@@ -29,3 +29,12 @@ async def delete_file_handler(client: Client, message: Message):
     except InvalidId:
         return await message.reply("❌ Invalid file ID format.")
       
+@bot.on_message(filters.command("delallfiles"))
+async def delete_all_files_handler(client: Client, message: Message):
+    user_id = message.from_user.id
+    sudoers = await get_sudo_list()
+    if user_id not in sudoers and user_id != Config.OWNER_ID:
+        return await message.reply("❌ You don't have permission to use this command.")
+
+    result = files_col.delete_many({})
+    await message.reply(f"✅ Deleted `{result.deleted_count}` files from the database.")
