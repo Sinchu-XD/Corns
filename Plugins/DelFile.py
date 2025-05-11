@@ -21,7 +21,7 @@ async def delete_file_handler(client: Client, message: Message):
     file_id = message.text.split(None, 1)[1]
 
     try:
-        result = await files_col.delete_one({"_id": ObjectId(file_id)})
+        result = files_col.delete_one({"_id": ObjectId(file_id)})
         if result.deleted_count:
             return await message.reply("✅ File deleted successfully.")
         else:
