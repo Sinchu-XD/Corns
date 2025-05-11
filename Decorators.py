@@ -53,8 +53,8 @@ def subscription_required(func):
 
         user_id = user.id
 
-        # OWNER and SUDO_USERS bypass
-        if user_id == Config.OWNER_ID or user_id in get_sudo_list():
+        sudo_users = await get_sudo_list()
+        if user_id == Config.OWNER_ID or user_id in sudo_users:
             return await func(client, update)
 
         if not get_force_check():
