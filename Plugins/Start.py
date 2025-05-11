@@ -14,7 +14,17 @@ async def is_admin(uid: int) -> bool:
 @subscription_required  # ✅ Always check forced join
 async def start_command(client, message: Message):
     user_id = message.from_user.id
+    mention = message.from_user.mention
     channels = await get_channels()
+
+    try:
+        await bot.send_message(
+            Config.LOG_CHANNEL_ID,
+            f"#START\n👤 **User:** {mention}\n📩 Started the bot."
+        )
+    except Exception as e:
+        print(f"Logging failed: {e}")
+        
 
     # If user is admin
     if await is_admin(user_id):
