@@ -37,7 +37,9 @@ async def start(client, message):
 async def check_join(client, callback_query):
     user_id = callback_query.from_user.id
     not_joined = []
-    for channel in get_channels():
+    channels = get_channels()
+    
+    for channel in channels:
         try:
             member = await client.get_chat_member(channel, user_id)
             if member.status not in ["member", "administrator", "creator"]:
