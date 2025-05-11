@@ -28,7 +28,7 @@ async def add_channel(username: str):
         channel_col.insert_one({"username": username})
 
 async def remove_channel(username: str):
-    await channel_col.delete_one({"username": username})
+    channel_col.delete_one({"username": username})
 
 async def get_channels():
     return [x["username"] for x in channel_col.find().to_list(length=1000)]
