@@ -54,14 +54,17 @@ def subscription_required(func):
             return
 
         user_id = user.id
-
         sudo_users = await get_sudo_list()
+
+        # ✅ Skip check for OWNER or SUDO
         if user_id == Config.OWNER_ID or user_id in sudo_users:
             return await func(client, update)
 
+        # ✅ Skip if force-check is disabled
         if not await get_force_check():
             return await func(client, update)
 
+        # ✅ Perform join check
         if not await check_subscription(client, user_id):
             channels = await get_channels()
             buttons = [
@@ -78,6 +81,9 @@ def subscription_required(func):
             elif isinstance(update, CallbackQuery):
                 return await update.message.edit_text(text, reply_markup=markup)
 
+            return  # prevent fallback
+
+        # ✅ If check passes, continue
         return await func(client, update)
 
     return wrapper
