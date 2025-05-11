@@ -22,39 +22,60 @@ owner_or_sudo = owner_only | sudo_only
 
 # helpers/check_join.py
 
-from pyrogram import Client
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 from pyrogram.errors import UserNotParticipant, PeerIdInvalid
-from Database import get_channels
+from pyrogram.enums import ChatMemberStatus
+from functools import wraps
+from Database import get_channels, get_force_check, get_sudo_list
+from Config import Config
 
-async def check_user_joined(client: Client, user_id: int) -> bool:
-    channels = await get_channels()
-    for ch in channels:
+async def check_subscription(bot, user_id: int) -> bool:
+    channels = get_channels()
+    for _, username in channels.items():
         try:
-            member = await client.get_chat_member(ch, user_id)
-            if member.status not in ("member", "administrator", "creator"):
+            member = await bot.get_chat_member(username, user_id)
+            if member.status not in [ChatMemberStatus.MEMBER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
                 return False
         except UserNotParticipant:
             return False
         except PeerIdInvalid:
-            return False
+            continue
         except Exception:
             continue
     return True
 
-async def send_join_prompt(client, message):
-    channels = await get_channels()
-    buttons = [[InlineKeyboardButton("✅ I’ve Joined", callback_data="check_join")]]
-    for ch in channels:
-        buttons.insert(0, [InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.replace('@', '')}")])
-    await message.reply(
-        "**🔒 Please join all required channels to use this bot.**",
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
+def subscription_required(func):
+    @wraps(func)
+    async def wrapper(client, update):
+        user = update.from_user
+        if not user:
+            return
 
+        user_id = user.id
 
-def require_join_filter():
-    async def func(_, __, message):
-        return await check_user_joined(_, message.from_user.id)
-    return filters.create(func)
+        # OWNER and SUDO_USERS bypass
+        if user_id == Config.OWNER_ID or user_id in get_sudo_list():
+            return await func(client, update)
 
-require_join = require_join_filter()
+        if not get_force_check():
+            return await func(client, update)
+
+        if not await check_subscription(client, user_id):
+            channels = get_channels()
+            buttons = [
+                [InlineKeyboardButton(f"🔗 Join Channel {slot}", url=f"https://t.me/{ch}")]
+                for slot, ch in sorted(channels.items())
+            ]
+            buttons.append([InlineKeyboardButton("✅ I Joined", callback_data="check_join")])
+
+            text = "🚫 **You must join all required channels to use this bot.**"
+            markup = InlineKeyboardMarkup(buttons)
+
+            if isinstance(update, Message):
+                return await update.reply(text, reply_markup=markup)
+            elif isinstance(update, CallbackQuery):
+                return await update.message.edit(text, reply_markup=markup)
+
+        return await func(client, update)
+
+    return wrapper
