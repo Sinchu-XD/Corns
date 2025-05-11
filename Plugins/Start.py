@@ -1,7 +1,7 @@
 # plugins/start.py
 
 from pyrogram import Client, filters
-from Main import bot
+from Bot import bot
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from Config import Config
 from Decorators import check_user_joined
