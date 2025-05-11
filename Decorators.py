@@ -38,3 +38,13 @@ async def check_user_joined(client: Client, user_id: int) -> bool:
         except Exception:
             continue
     return True
+
+async def send_join_prompt(client, message):
+    channels = await get_channels()
+    buttons = [[InlineKeyboardButton("✅ I’ve Joined", callback_data="check_join")]]
+    for ch in channels:
+        buttons.insert(0, [InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.replace('@', '')}")])
+    await message.reply(
+        "**🔒 Please join all required channels to use this bot.**",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
