@@ -11,3 +11,4 @@ class Config:
     OWNER_ID = int(os.environ.get("OWNER_ID", "123456789"))  # Your Telegram user ID
 
     LOG_CHANNEL_ID = int(os.environ.get("LOG_CHANNEL_ID", "-100XXXXXXXXXX"))  # Logs group/channel ID
+    BOT_USERNAME = "CornHub69Bot"
