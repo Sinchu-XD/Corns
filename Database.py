@@ -3,10 +3,10 @@
 
 # helpers/db.py
 
-from Config.Config import MONGO_URI
+from Config import Config
 from pymongo import MongoClient
 
-db = MongoClient(MONGO_URI).RichBot
+db = MongoClient(Config.MONGO_URI).RichBot
 sudo_col = db.sudo_users
 
 async def add_sudo(user_id: int):
