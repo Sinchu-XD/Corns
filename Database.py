@@ -10,7 +10,7 @@ db = MongoClient(Config.MONGO_URI).RichBot
 sudo_col = db.sudo_users
 
 async def add_sudo(user_id: int):
-    if not await sudo_col.find_one({"user_id": user_id}):
+    if not sudo_col.find_one({"user_id": user_id}):
         await sudo_col.insert_one({"user_id": user_id})
 
 async def remove_sudo(user_id: int):
