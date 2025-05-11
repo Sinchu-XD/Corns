@@ -13,7 +13,7 @@ def is_admin(uid):
 @subscription_required
 async def start_command(client, message: Message):
     user_id = message.from_user.id
-    channels = get_channels()
+    channels = await get_channels()
 
     if is_admin(user_id):
         if len(channels) < 2:
