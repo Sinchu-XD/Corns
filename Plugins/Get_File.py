@@ -2,7 +2,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from Main import bot
+from Bot import bot
 from Database import get_file_by_id
 from bson.errors import InvalidId
 
