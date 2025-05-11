@@ -8,7 +8,7 @@ class Config:
     BOT_TOKEN = os.getenv("BOT_TOKEN", "7849290437:AAGsPd0m4de-bcNXYNvqb8fgBQ5eNHXyc2Q")
     MONGO_URL = os.getenv("MONGO_URL", "mongodb+srv://Sinchu:Sinchu@sinchu.qwijj.mongodb.net/?retryWrites=true&w=majority&appName=Sinchu")
 
-    OWNER_ID = int(os.environ.get("OWNER_ID", "123456789"))  # Your Telegram user ID
+    OWNER_ID = int(os.environ.get("OWNER_ID", "7862043458"))  # Your Telegram user ID
 
-    LOG_CHANNEL_ID = int(os.environ.get("LOG_CHANNEL_ID", "-100XXXXXXXXXX"))  # Logs group/channel ID
+    
     BOT_USERNAME = "CornHub69Bot"
