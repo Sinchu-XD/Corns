@@ -5,6 +5,8 @@
 from datetime import datetime
 from Config import Config
 from pymongo import MongoClient
+from bson import ObjectId
+
 
 db = MongoClient(Config.MONGO_URI).RichBot
 sudo_col = db.sudo_users
