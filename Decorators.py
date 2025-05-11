@@ -28,8 +28,6 @@ from Database import get_channels
 
 async def check_user_joined(client: Client, user_id: int) -> bool:
     channels = await get_channels()
-    if not channels:
-        return False  # If no channels are configured, consider not joined
     for ch in channels:
         try:
             member = await client.get_chat_member(ch, user_id)
