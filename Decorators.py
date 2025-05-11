@@ -23,7 +23,7 @@ owner_or_sudo = owner_only | sudo_only
 # helpers/check_join.py
 
 from pyrogram import Client
-from pyrogram.errors import UserNotParticipant
+from pyrogram.errors import UserNotParticipant, PeerIdInvalid
 from Database import get_channels
 
 async def check_user_joined(client: Client, user_id: int) -> bool:
@@ -34,6 +34,8 @@ async def check_user_joined(client: Client, user_id: int) -> bool:
             if member.status not in ("member", "administrator", "creator"):
                 return False
         except UserNotParticipant:
+            return False
+        except PeerIdInvalid:
             return False
         except Exception:
             continue
@@ -48,3 +50,12 @@ async def send_join_prompt(client, message):
         "**🔒 Please join all required channels to use this bot.**",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
+
+async def is_user_joined(client, _, message):
+    user_id = message.from_user.id
+    if await check_user_joined(client, user_id):
+        return True
+    await send_join_prompt(client, message)
+    return False
+
+require_join = filters.create(is_user_joined)
