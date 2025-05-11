@@ -1,7 +1,5 @@
 # main.py
-
-from pyrogram import Client
-from Config import Config
+from Bot import bot
 import os
 import asyncio
 import importlib
@@ -13,12 +11,6 @@ for filename in os.listdir(plugin_folder):
         importlib.import_module(f"{plugin_folder}.{filename[:-3]}")
 
 
-bot = Client(
-    "RichFeatureBot",
-    api_id=Config.API_ID,
-    api_hash=Config.API_HASH,
-    bot_token=Config.BOT_TOKEN,
-)
 
 if __name__ == "__main__":
     print(">> Bot Starting...")
