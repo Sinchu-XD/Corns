@@ -17,7 +17,7 @@ async def start_command(client, message: Message):
     user_id = message.from_user.id
     channels = await get_channels()
 
-    if await is_admin(user_id):  # ✅ Await here
+    if await is_admin(user_id):
         if len(channels) < 2:
             return await message.reply(
                 "⚠️ You need to add at least **2 channels** using:\n`/addch <slot> <@channel>`"
@@ -31,10 +31,19 @@ async def start_command(client, message: Message):
 
     # For NON-ADMIN users
     if channels:
-        keyboard = [
-            [InlineKeyboardButton(f"📡 Join @{username}", url=f"https://t.me/{username}")]
-            for slot, username in channels
-        ]
+        try:
+            # If channels is a dict: {slot: channel_username}
+            keyboard = [
+                [InlineKeyboardButton(f"📡 Join @{username}", url=f"https://t.me/{username}")]
+                for slot, username in channels.items()
+            ]
+        except AttributeError:
+            # If channels is a list of channel usernames
+            keyboard = [
+                [InlineKeyboardButton(f"📡 Join @{username}", url=f"https://t.me/{username}")]
+                for username in channels
+            ]
+
         return await message.reply(
             "📥 To access the content, please join all our channels:",
             reply_markup=InlineKeyboardMarkup(keyboard)
