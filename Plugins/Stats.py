@@ -13,8 +13,8 @@ async def stats_handler(client: Client, message: Message):
     if user_id not in sudoers and user_id != Config.OWNER_ID:
         return await message.reply("❌ You are not authorized to view stats.")
 
-    total_files = await db.files.count_documents({})
-    total_users = await db.files.distinct("user_id")
+    total_files = db.files.count_documents({})
+    total_users = db.files.distinct("user_id")
     await message.reply(
         f"📊 **Bot Stats**\n\n"
         f"👥 Total Users: `{len(total_users)}`\n"
