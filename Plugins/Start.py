@@ -2,10 +2,12 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from Bot import bot
 from Config import Config
+from Decorators import subscription_required
 from Database import get_channels
 from datetime import datetime
 
 @bot.on_message(filters.private & filters.command("start"))
+@subscription_required
 async def start(client, message):
     user_id = message.from_user.id
     not_joined = []
