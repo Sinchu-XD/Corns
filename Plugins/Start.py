@@ -28,24 +28,14 @@ async def start_bot(client: Client, message: Message):
             return await message.reply("⚠️ Add at least 2 channels using `/addchannel` to make the bot functional.")
         return await message.reply("⚠️ Bot is under setup. Please wait until the owner configures it.")
 
-    # Check if user joined all required channels
-    joined = await check_user_joined(client, user_id)
-    if not joined:
-        buttons = [[InlineKeyboardButton("✅ I've Joined All", callback_data="check_join")]]
-        for ch in channels:
-            buttons.insert(0, [InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.replace('@', '')}")])
-        return await message.reply(
-            "**🔒 Please join all the required channels to use the bot.**",
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
+    # Send join buttons to all users
+    buttons = [[InlineKeyboardButton("✅ I’ve Joined", callback_data="check_join")]]
+    for ch in channels:
+        buttons.insert(0, [InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.replace('@', '')}")])
 
-    # If joined and non-owner/sudo, only show thank you
-    if user_id != Config.OWNER_ID and user_id not in sudoers:
-        return await message.reply("✅ **Thanks for joining us!**")
-
-    # If sudo/owner
     await message.reply(
-        "✅ You're verified!\n\nNow send me a **File** (Photo, Video, or Document) to get a direct link.",
+        "**🔒 Please join all required channels to continue using this bot.**",
+        reply_markup=InlineKeyboardMarkup(buttons)
     )
 
 
@@ -53,12 +43,12 @@ async def start_bot(client: Client, message: Message):
 async def recheck_join(client: Client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     joined = await check_user_joined(client, user_id)
+    sudoers = await get_sudo_list()
+
     if not joined:
         return await callback_query.answer("❌ You still haven't joined all channels!", show_alert=True)
 
-    sudoers = await get_sudo_list()
-
-    # Show message based on user type
+    # Response based on user type
     if user_id != Config.OWNER_ID and user_id not in sudoers:
         return await callback_query.message.edit_text("✅ **Thanks for joining us!**")
 
