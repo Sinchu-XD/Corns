@@ -6,6 +6,7 @@ import os
 import asyncio
 import importlib
 import glob
+import Plugins
 
 bot = Client(
     "RichFeatureBot",
