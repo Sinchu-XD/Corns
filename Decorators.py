@@ -51,11 +51,10 @@ async def send_join_prompt(client, message):
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-async def is_user_joined(client, _, message):
-    user_id = message.from_user.id
-    if await check_user_joined(client, user_id):
-        return True
-    await send_join_prompt(client, message)
-    return False
 
-require_join = filters.create(is_user_joined)
+def require_join_filter():
+    async def func(_, __, message):
+        return await check_user_joined(_, message.from_user.id)
+    return filters.create(func)
+
+require_join = require_join_filter()
