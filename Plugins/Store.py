@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from Database import save_file
 from Main import bot
-from Config.Config import BOT_USERNAME
+from Config import Config
 
 @bot.on_message(filters.private & filters.media)
 async def handle_file(c: Client, m: Message):
@@ -21,7 +21,7 @@ async def handle_file(c: Client, m: Message):
     file_id = media.file_id
     file_ref_id = await save_file(m.from_user.id, file_id, file_type)
 
-    link = f"https://t.me/{BOT_USERNAME}?start={file_ref_id}"
+    link = f"https://t.me/{Config.BOT_USERNAME}?start={file_ref_id}"
     await m.reply(
         f"✅ File saved!\n🔗 **Here’s your link:**\n`{link}`\n🆔 File ID: `{file_ref_id}`",
         quote=True
