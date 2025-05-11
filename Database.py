@@ -10,6 +10,7 @@ from bson import ObjectId
 
 db = MongoClient(Config.MONGO_URI).RichBot
 sudo_col = db.sudo_users
+settings_collection = db["settings"]
 
 async def add_sudo(user_id: int):
     if not sudo_col.find_one({"user_id": user_id}):
