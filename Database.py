@@ -1,55 +1,50 @@
 # Telegram @Itz_Your_4Bhi
 # Copyright ©️ 2025
 
+# helpers/db.py
+
+from Config.Config import MONGO_URI
 from pymongo import MongoClient
-from Config import Config
 
-client = MongoClient(Config.MONGO_URI)
-db = client["RichBot"]
+db = MongoClient(MONGO_URI).RichBot
+sudo_col = db.sudo_users
 
-# Collections
-channels_db = db["channels"]
-sudos_db = db["sudos"]
-files_db = db["files"]
+async def add_sudo(user_id: int):
+    if not await sudo_col.find_one({"user_id": user_id}):
+        await sudo_col.insert_one({"user_id": user_id})
 
-# CHANNELS
-def add_channel(channel_id):
-    if not channels_db.find_one({"channel_id": channel_id}):
-        channels_db.insert_one({"channel_id": channel_id})
+async def remove_sudo(user_id: int):
+    await sudo_col.delete_one({"user_id": user_id})
 
-def remove_channel(channel_id):
-    channels_db.delete_one({"channel_id": channel_id})
+async def get_sudo_list():
+    return [x["user_id"] for x in await sudo_col.find().to_list(length=0)]
 
-def get_all_channels():
-    return [ch["channel_id"] for ch in channels_db.find()]
+# Add below existing sudo functions in helpers/db.py
 
-def channels_exist():
-    return channels_db.count_documents({}) > 0
+channel_col = db.required_channels
 
-# SUDO USERS
-def add_sudo(user_id):
-    if not sudos_db.find_one({"user_id": user_id}):
-        sudos_db.insert_one({"user_id": user_id})
+async def add_channel(username: str):
+    if not await channel_col.find_one({"username": username}):
+        await channel_col.insert_one({"username": username})
 
-def remove_sudo(user_id):
-    sudos_db.delete_one({"user_id": user_id})
+async def remove_channel(username: str):
+    await channel_col.delete_one({"username": username})
 
-def get_sudo_users():
-    return [s["user_id"] for s in sudos_db.find()]
+async def get_channels():
+    return [x["username"] for x in await channel_col.find().to_list(length=0)]
 
-def is_sudo(user_id):
-    return user_id == Config.OWNER_ID or sudos_db.find_one({"user_id": user_id}) is not None
+files_col = db.files
 
-# FILE STORAGE
-def save_file(file_id, user_id, link):
-    files_db.insert_one({"user_id": user_id, "file_id": file_id, "link": link})
+async def save_file(user_id: int, file_id: str, file_type: str):
+    doc = {
+        "user_id": user_id,
+        "file_id": file_id,
+        "file_type": file_type,
+        "time": datetime.utcnow()
+    }
+    insert = await files_col.insert_one(doc)
+    return str(insert.inserted_id)
 
-def get_user_files(user_id):
-    return files_db.find({"user_id": user_id})
-
-def set_main_channel(channel: str):
-    db.config.update_one({"_id": "main_channel"}, {"$set": {"channel": channel}}, upsert=True)
-
-def get_main_channel():
-    doc = db.config.find_one({"_id": "main_channel"})
-    return doc["channel"] if doc else None
+async def get_file_by_id(file_id: str):
+    return await files_col.find_one({"_id": ObjectId(file_id)})
+    
