@@ -2,7 +2,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from Config.Config import OWNER_ID
+from Config import Config
 from Main import bot
 from Database import add_sudo, remove_sudo, get_sudo_list
 from Decorators import owner_only
