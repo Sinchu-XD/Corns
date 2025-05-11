@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from Bot import bot
 from Config import Config
-from Database import check_user_joined
+from Decorators import check_user_joined
 from Database import get_channels, get_sudo_list
 from datetime import datetime
 
