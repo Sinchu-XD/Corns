@@ -42,6 +42,7 @@ async def start_command(client, message: Message):
             keyboard = [
                 [InlineKeyboardButton(f"📡 Join @{username}", url=f"https://t.me/{username}")]
                 for username in channels
+                keyboard.append([InlineKeyboardButton("✅ I Joined", callback_data="check_join")])
             ]
 
         return await message.reply(
@@ -50,3 +51,12 @@ async def start_command(client, message: Message):
         )
     else:
         return await message.reply("❌ No channels are configured yet. Please try again later.")
+
+@bot.on_callback_query(filters.regex("check_join"))
+async def recheck_subscription(client, callback_query: CallbackQuery):
+    user_id = callback_query.from_user.id
+    if await check_subscription(client, user_id):
+        await callback_query.message.edit("✅ You're successfully verified! You can now use the bot.")
+    else:
+        await callback_query.answer("🚫 You haven't joined all channels yet.", show_alert=True)
+        
