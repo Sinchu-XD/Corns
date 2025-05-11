@@ -2,7 +2,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from Main import bot
+from Bot import bot
 from Database import db, get_sudo_list
 from Config import Config
 
