@@ -11,8 +11,8 @@ async def add_channel_cmd(c: Client, m: Message):
     if len(m.command) < 2:
         return await m.reply("Usage: `/addchannel @channelusername`")
     ch = m.command[1]
-    if not ch.startswith("@"):
-        return await m.reply("Channel username must start with `@`")
+    if ch.startswith("@"):
+        ch = ch[1:]
     await add_channel(ch)
     await m.reply(f"✅ Added {ch} to required join list.")
 
