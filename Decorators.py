@@ -31,15 +31,17 @@ from Config import Config
 
 async def check_subscription(bot, user_id: int) -> bool:
     channels = await get_channels()
-    for channel in channels:
+    for ch in channels:
         try:
-            member = await bot.get_chat_member(username, user_id)
-            if member.status not in [ChatMemberStatus.MEMBER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+            member = await bot.get_chat_member(ch, user_id)
+            if member.status not in [
+                ChatMemberStatus.MEMBER,
+                ChatMemberStatus.ADMINISTRATOR,
+                ChatMemberStatus.OWNER,
+            ]:
                 return False
-        except UserNotParticipant:
+        except (UserNotParticipant, PeerIdInvalid):
             return False
-        except PeerIdInvalid:
-            continue
         except Exception:
             continue
     return True
@@ -63,8 +65,8 @@ def subscription_required(func):
         if not await check_subscription(client, user_id):
             channels = await get_channels()
             buttons = [
-                [InlineKeyboardButton(f"🔗 Join Channel {slot}", url=f"https://t.me/{ch}")]
-                for slot, ch in sorted(channels.items())
+                [InlineKeyboardButton(f"🔗 Join Channel {i+1}", url=f"https://t.me/{ch}")]
+                for i, ch in enumerate(channels)
             ]
             buttons.append([InlineKeyboardButton("✅ I Joined", callback_data="check_join")])
 
@@ -74,7 +76,7 @@ def subscription_required(func):
             if isinstance(update, Message):
                 return await update.reply(text, reply_markup=markup)
             elif isinstance(update, CallbackQuery):
-                return await update.message.edit(text, reply_markup=markup)
+                return await update.message.edit_text(text, reply_markup=markup)
 
         return await func(client, update)
 
