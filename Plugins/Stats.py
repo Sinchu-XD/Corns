@@ -6,7 +6,7 @@ from Bot import bot
 from Database import db, get_sudo_list
 from Config import Config
 
-@bot.on_message(filters.command("stats")
+@bot.on_message(filters.command("stats"))
 async def stats_handler(client: Client, message: Message):
     user_id = message.from_user.id
     sudoers = await get_sudo_list()
