@@ -5,7 +5,7 @@ from pyrogram.types import Message
 from Database import files_col, get_sudo_list
 from Config import Config
 from bson import ObjectId
-from Main import bot
+from Bot import bot
 from bson.errors import InvalidId
 
 @bot.on_message(filters.command("delfile") & filters.private)
