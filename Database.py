@@ -11,10 +11,10 @@ sudo_col = db.sudo_users
 
 async def add_sudo(user_id: int):
     if not sudo_col.find_one({"user_id": user_id}):
-        await sudo_col.insert_one({"user_id": user_id})
+        sudo_col.insert_one({"user_id": user_id})
 
 async def remove_sudo(user_id: int):
-    await sudo_col.delete_one({"user_id": user_id})
+    sudo_col.delete_one({"user_id": user_id})
 
 async def get_sudo_list():
     return [x["user_id"] for x in sudo_col.find().to_list(length=1000)]
@@ -24,8 +24,8 @@ async def get_sudo_list():
 channel_col = db.required_channels
 
 async def add_channel(username: str):
-    if not await channel_col.find_one({"username": username}):
-        await channel_col.insert_one({"username": username})
+    if not channel_col.find_one({"username": username}):
+        channel_col.insert_one({"username": username})
 
 async def remove_channel(username: str):
     await channel_col.delete_one({"username": username})
@@ -42,9 +42,9 @@ async def save_file(user_id: int, file_id: str, file_type: str):
         "file_type": file_type,
         "time": datetime.utcnow()
     }
-    insert = await files_col.insert_one(doc)
+    insert = files_col.insert_one(doc)
     return str(insert.inserted_id)
 
 async def get_file_by_id(file_id: str):
-    return await files_col.find_one({"_id": ObjectId(file_id)})
+    return files_col.find_one({"_id": ObjectId(file_id)})
     
