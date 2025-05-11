@@ -23,7 +23,7 @@ async def handle_file(c: Client, m: Message):
 
     link = f"https://t.me/{BOT_USERNAME}?start={file_ref_id}"
     await m.reply(
-        f"✅ File saved!\n🔗 **Here’s your link:**\n`{link}`",
+        f"✅ File saved!\n🔗 **Here’s your link:**\n`{link}`\n🆔 File ID: `{file_ref_id}`",
         quote=True
     )
   
