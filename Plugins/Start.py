@@ -12,7 +12,9 @@ from datetime import datetime
 async def start(client, message):
     user_id = message.from_user.id
     not_joined = []
-    for channel in get_channels():
+    channels = get_channels()
+    
+    for channel in channels:
         try:
             member = await client.get_chat_member(channel, user_id)
             if member.status not in ["member", "administrator", "creator"]:
