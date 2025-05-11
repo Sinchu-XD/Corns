@@ -12,7 +12,7 @@ from datetime import datetime
 async def start(client, message):
     user_id = message.from_user.id
     not_joined = []
-    channels = get_channels()
+    channels = await get_channels()
     
     for channel in channels:
         try:
@@ -37,7 +37,7 @@ async def start(client, message):
 async def check_join(client, callback_query):
     user_id = callback_query.from_user.id
     not_joined = []
-    channels = get_channels()
+    channels = await get_channels()
     
     for channel in channels:
         try:
