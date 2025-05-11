@@ -10,7 +10,7 @@ async def is_admin(uid: int) -> bool:
     sudo_users = await get_sudo_list()
     return uid == Config.OWNER_ID or uid in sudo_users
 
-@bot.on_message(filters.command("start") & filters.private)
+@bot.on_message(filters.command("start"))
 @subscription_required  # ✅ Always check forced join
 async def start_command(client, message: Message):
     user_id = message.from_user.id
