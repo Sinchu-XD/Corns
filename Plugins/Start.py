@@ -1,19 +1,20 @@
 from pyrogram import Client, filters
-from Bot import bot
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from Bot import bot
 from Config import Config
-from Decorators import check_user_joined
+from Decorators import require_join, owner_or_sudo
+from Decorators import send_join_prompt
 from Database import get_channels, get_sudo_list
 from datetime import datetime
 
-@bot.on_message(filters.command("start"))
+@bot.on_message(filters.command("start") & filters.private & require_join)
 async def start_bot(client: Client, message: Message):
     user_id = message.from_user.id
     mention = message.from_user.mention
     channels = await get_channels()
     sudoers = await get_sudo_list()
 
-    # Log start
+    # Logging
     try:
         await bot.send_message(
             Config.LOG_GROUP_ID,
@@ -22,20 +23,14 @@ async def start_bot(client: Client, message: Message):
     except:
         pass
 
-    # No channels configured
+    # If channels not configured
     if not channels or len(channels) < 2:
         if user_id == Config.OWNER_ID or user_id in sudoers:
             return await message.reply("⚠️ Add at least 2 channels using `/addchannel` to make the bot functional.")
         return await message.reply("⚠️ Bot is under setup. Please wait until the owner configures it.")
 
-    # Send join buttons to all users
-    buttons = [[InlineKeyboardButton("✅ I’ve Joined", callback_data="check_join")]]
-    for ch in channels:
-        buttons.insert(0, [InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.replace('@', '')}")])
-
     await message.reply(
-        "**🔒 Please join all required channels to continue using this bot.**",
-        reply_markup=InlineKeyboardMarkup(buttons)
+        "✅ You're verified!\n\nNow send me a **File** (Photo, Video, or Document) to get a direct link."
     )
 
 
@@ -43,16 +38,16 @@ async def start_bot(client: Client, message: Message):
 async def recheck_join(client: Client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     sudoers = await get_sudo_list()
-
-    # Check required channels exist
     channels = await get_channels()
+
     if not channels or len(channels) < 2:
         return await callback_query.message.edit_text(
             "⚠️ Bot is under setup. Required channels are not configured. Please contact the bot owner."
         )
 
-    # Run strict join check
+    from helpers.check_join import check_user_joined
     joined = await check_user_joined(client, user_id)
+
     if not joined:
         try:
             await callback_query.answer(
@@ -62,11 +57,9 @@ async def recheck_join(client: Client, callback_query: CallbackQuery):
             pass
         return
 
-    # If user is not sudo or owner
-    if user_id != Config.OWNER_ID and user_id not in sudoers:
-        return await callback_query.message.edit_text("✅ **Thanks for joining us!**")
-
-    # For owner/sudo
-    await callback_query.message.edit_text(
-        "✅ You're verified!\n\nNow send me a **File** (Photo, Video, or Document) to get a direct link."
-    )
+    if user_id == Config.OWNER_ID or user_id in sudoers:
+        await callback_query.message.edit_text(
+            "✅ You're verified!\n\nNow send me a **File** (Photo, Video, or Document) to get a direct link."
+        )
+    else:
+        await callback_query.message.edit_text("✅ **Thanks for joining us!**")
