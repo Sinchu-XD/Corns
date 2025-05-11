@@ -17,7 +17,7 @@ async def remove_sudo(user_id: int):
     await sudo_col.delete_one({"user_id": user_id})
 
 async def get_sudo_list():
-    return [x["user_id"] for x in await sudo_col.find().to_list(length=0)]
+    return [x["user_id"] for x in sudo_col.find().to_list(length=1000)]
 
 # Add below existing sudo functions in helpers/db.py
 
