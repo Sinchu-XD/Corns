@@ -3,7 +3,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from Database import save_file
-from Main import bot
+from Bot import bot
 from Config import Config
 
 @bot.on_message(filters.private & filters.media)
