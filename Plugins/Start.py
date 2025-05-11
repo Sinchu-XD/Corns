@@ -3,7 +3,7 @@
 from pyrogram import Client, filters
 from Main import bot
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from Config.Config import OWNER_ID, LOG_GROUP_ID
+from Config import Config
 from Decorators import check_user_joined
 from Database import get_channels, get_sudo_list
 from Decorators import owner_or_sudo
@@ -18,7 +18,7 @@ async def start_bot(client: Client, message: Message):
     # log start
     try:
         await client.send_message(
-            LOG_GROUP_ID,
+            Config.LOG_GROUP_ID,
             f"👤 User : {user_id} started the bot.\n🕒 `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`",
         )
     except:
@@ -26,7 +26,7 @@ async def start_bot(client: Client, message: Message):
 
     # if less than 2 channels
     if len(channels) < 2:
-        if user_id in sudoers or user_id == OWNER_ID:
+        if user_id in sudoers or user_id == Config.OWNER_ID:
             return await message.reply("⚠️ Add at least 2 channels using `/addchannel`.")
         return await message.reply("⚠️ Bot is under setup. Ask the owner to configure channels.")
 
