@@ -8,7 +8,7 @@ from bson import ObjectId
 from Bot import bot
 from bson.errors import InvalidId
 
-@bot.on_message(filters.command("delfile") & filters.private)
+@bot.on_message(filters.command("delfile"))
 async def delete_file_handler(client: Client, message: Message):
     user_id = message.from_user.id
     sudoers = await get_sudo_list()
