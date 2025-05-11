@@ -1,15 +1,12 @@
-# Plugins/start.py
-
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from Bot import bot
 from Config import Config
-from Decorators import check_user_joined
 from Database import get_channels, get_sudo_list
 from datetime import datetime
 
 @bot.on_message(filters.private & filters.command("start"))
-async def start(client, message):
+async def start(client, message: Message):
     user_id = message.from_user.id
     not_joined = []
     channels = await get_channels()
@@ -17,14 +14,18 @@ async def start(client, message):
     for channel in channels:
         try:
             member = await client.get_chat_member(channel, user_id)
+            # Debugging line to log member's status
+            print(f"User {user_id} status in {channel}: {member.status}")
             if member.status not in ["member", "administrator", "creator"]:
                 not_joined.append(channel)
-        except:
+        except Exception as e:
+            # Log the error for better debugging
+            print(f"Error fetching member status for {channel}: {e}")
             not_joined.append(channel)
 
     if not_joined:
         buttons = [
-            [InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.replace('@', '')}")]
+            [InlineKeyboardButton(f"📢 Join @{ch}", url=f"https://t.me/{ch}")]
             for ch in not_joined
         ]
         buttons.append([InlineKeyboardButton("✅ I've Joined", callback_data="check_join")])
@@ -34,7 +35,7 @@ async def start(client, message):
 
 # Callback check
 @bot.on_callback_query(filters.regex("check_join"))
-async def check_join(client, callback_query):
+async def check_join(client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     not_joined = []
     channels = await get_channels()
@@ -42,9 +43,13 @@ async def check_join(client, callback_query):
     for channel in channels:
         try:
             member = await client.get_chat_member(channel, user_id)
+            # Debugging line to log member's status
+            print(f"User {user_id} status in {channel}: {member.status}")
             if member.status not in ["member", "administrator", "creator"]:
                 not_joined.append(channel)
-        except:
+        except Exception as e:
+            # Log the error for better debugging
+            print(f"Error fetching member status for {channel}: {e}")
             not_joined.append(channel)
 
     if not_joined:
