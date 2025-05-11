@@ -44,20 +44,29 @@ async def recheck_join(client: Client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     sudoers = await get_sudo_list()
 
-    # Strict check
+    # Check required channels exist
+    channels = await get_channels()
+    if not channels or len(channels) < 2:
+        return await callback_query.message.edit_text(
+            "⚠️ Bot is under setup. Required channels are not configured. Please contact the bot owner."
+        )
+
+    # Run strict join check
     joined = await check_user_joined(client, user_id)
     if not joined:
         try:
-            await callback_query.answer("❌ You still haven't joined all required channels!", show_alert=True)
+            await callback_query.answer(
+                "❌ You still haven't joined all the required channels!", show_alert=True
+            )
         except:
             pass
-        return  # Important: Don't proceed if not joined
+        return
 
-    # If joined properly
+    # If user is not sudo or owner
     if user_id != Config.OWNER_ID and user_id not in sudoers:
         return await callback_query.message.edit_text("✅ **Thanks for joining us!**")
 
+    # For owner/sudo
     await callback_query.message.edit_text(
         "✅ You're verified!\n\nNow send me a **File** (Photo, Video, or Document) to get a direct link."
     )
-    
