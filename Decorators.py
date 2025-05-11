@@ -30,7 +30,7 @@ from Database import get_channels, get_force_check, get_sudo_list
 from Config import Config
 
 async def check_subscription(bot, user_id: int) -> bool:
-    channels = get_channels()
+    channels = await get_channels()
     for _, username in channels.items():
         try:
             member = await bot.get_chat_member(username, user_id)
@@ -61,7 +61,7 @@ def subscription_required(func):
             return await func(client, update)
 
         if not await check_subscription(client, user_id):
-            channels = get_channels()
+            channels = await get_channels()
             buttons = [
                 [InlineKeyboardButton(f"🔗 Join Channel {slot}", url=f"https://t.me/{ch}")]
                 for slot, ch in sorted(channels.items())
