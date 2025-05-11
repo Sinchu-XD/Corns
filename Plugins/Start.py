@@ -33,7 +33,7 @@ async def start_command(client, message: Message):
     if channels:
         keyboard = [
             [InlineKeyboardButton(f"📡 Join @{username}", url=f"https://t.me/{username}")]
-            for slot, username in channels.items()
+            for slot, username in channels
         ]
         return await message.reply(
             "📥 To access the content, please join all our channels:",
