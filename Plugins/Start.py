@@ -24,7 +24,7 @@ async def start(client, message):
 
     if not_joined:
         buttons = [
-            [InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.replace('@', '')}")])
+            [InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.replace('@', '')}")]
             for ch in not_joined
         ]
         buttons.append([InlineKeyboardButton("✅ I've Joined", callback_data="check_join")])
