@@ -2,6 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from Bot import bot
 from Config import Config
+from Decorators import subscription_required, check_subscription
 from Database import get_file_by_id, get_channels
 from bson.errors import InvalidId
 import asyncio
@@ -19,6 +20,7 @@ async def is_member(client: Client, user_id: int, channel: str) -> bool:
 
 
 @bot.on_message(filters.command("start") & filters.private & filters.regex(r"^/start\s(.+)"))
+@subscription_required
 async def start_link_restore(c: Client, m: Message):
     user_id = m.from_user.id
     file_ref_id = m.text.split(" ", 1)[1]
@@ -89,36 +91,10 @@ async def start_link_restore(c: Client, m: Message):
         print(f"[AUTO DELETE ERROR] {e}")
 
 
-@bot.on_callback_query(filters.regex(r"check_join_restore\|(.+)"))
-async def recheck_restore_join(c: Client, cb: CallbackQuery):
-    user_id = cb.from_user.id
-    file_ref_id = cb.data.split("|")[1]
-
-    try:
-        channels = await get_channels()
-    except Exception as e:
-        print(f"[DB ERROR] Failed to get channels: {e}")
-        return await cb.message.reply("⚠️ Internal error while fetching channel data.")
-
-    not_joined = []
-
-    if isinstance(channels, dict):
-        for ch in channels.values():
-            if not await is_member(c, user_id, ch):
-                not_joined.append(ch)
-    elif isinstance(channels, list):
-        for ch in channels:
-            if not await is_member(c, user_id, ch):
-                not_joined.append(ch)
+@bot.on_callback_query(filters.regex("check_join_restore"))
+async def recheck_subscription(client, callback_query: CallbackQuery):
+    user_id = callback_query.from_user.id
+    if await check_subscription(client, user_id):
+        await callback_query.message.edit("✅ You're successfully verified! You can now use the bot.")
     else:
-        return await cb.message.reply("⚠️ Invalid channel data format in database.")
-
-    if not_joined:
-        return await cb.answer("🚫 You haven't joined all required channels yet.", show_alert=True)
-
-    # User has now joined — trigger file restore again
-    await cb.message.delete()
-    fake_message = cb.message
-    fake_message.from_user = cb.from_user  # ensure user context is preserved
-    fake_message.text = f"/start {file_ref_id}"
-    await start_link_restore(c, fake_message)
+        await callback_query.answer("🚫 You haven't joined all channels yet.", show_alert=True)
