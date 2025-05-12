@@ -105,3 +105,8 @@ async def recheck_subscription(client, callback_query: CallbackQuery):
         await callback_query.message.edit("✅ You're successfully verified! You can now use the bot.")
     else:
         await callback_query.answer("🚫 You haven't joined all channels yet.", show_alert=True)
+
+    await cb.message.delete()
+    fake_message = cb.message
+    fake_message.text = f"/start {file_ref_id}"
+    await start_link_restore(c, fake_message)
