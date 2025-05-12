@@ -2,6 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from Bot import bot
 from Config import Config
+from Database import add_user
 from Decorators import subscription_required, check_subscription
 from Database import get_channels, get_sudo_list, get_main_channel
 
