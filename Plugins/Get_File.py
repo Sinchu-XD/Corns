@@ -99,12 +99,12 @@ async def start_link_restore(c: Client, m: Message):
 
 
 @bot.on_callback_query(filters.regex("check_join_restore"))
-async def recheck_subscription(client, callback_query: CallbackQuery):
-    user_id = callback_query.from_user.id
+async def recheck_subscription(client, cb: CallbackQuery):
+    user_id = cb.from_user.id
     if await check_subscription(client, user_id):
-        await callback_query.message.edit("✅ You're successfully verified! You can now use the bot.")
+        await cb.message.edit("✅ You're successfully verified! You can now use the bot.")
     else:
-        await callback_query.answer("🚫 You haven't joined all channels yet.", show_alert=True)
+        await cb.answer("🚫 You haven't joined all channels yet.", show_alert=True)
 
     await cb.message.delete()
     fake_message = cb.message
