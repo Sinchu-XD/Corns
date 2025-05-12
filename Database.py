@@ -14,15 +14,15 @@ settings_collection = db["settings"]
 users_col = db.users
 config_col = db["config"]
 
-# ✅ Add user to DB
-async def add_user(user_id: int, first_name: str, username: str = None):
-    if not users_col.find_one({"user_id": user_id}):
-        users_col.insert_one({
-            "user_id": user_id,
-            "first_name": first_name,
-            "username": username,
-            "joined_on": datetime.utcnow()
-        })
+def add_user(user_id: int):
+    try:
+        users_collection.update_one(
+            {"user_id": user_id},
+            {"$set": {"user_id": user_id}},
+            upsert=True
+        )
+    except Exception as e:
+        print(f"Error adding user: {e}")
         
 async def add_sudo(user_id: int):
     if not sudo_col.find_one({"user_id": user_id}):
