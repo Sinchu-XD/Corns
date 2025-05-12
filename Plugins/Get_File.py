@@ -99,15 +99,20 @@ async def start_link_restore(c: Client, m: Message):
 
 
 @bot.on_callback_query(filters.regex("check_join_restore"))
-async def recheck_subscription(client, cb: CallbackQuery):
+async def recheck_subscription(client: Client, cb: CallbackQuery):
     user_id = cb.from_user.id
     file_ref_id = cb.data.split("|")[1]
-    if await check_subscription(client, user_id):
-        await cb.message.edit("✅ You're successfully verified! You can now use the bot.")
-    else:
-        await cb.answer("🚫 You haven't joined all channels yet.", show_alert=True)
 
+    # ✅ Check if user has joined all channels
+    if not await check_subscription(client, user_id):
+        await cb.answer("🚫 You haven't joined all required channels yet.", show_alert=True)
+        return  # 🔁 Do not continue to restore flow if not joined
+
+    await cb.answer("✅ You're successfully verified!", show_alert=True)
     await cb.message.delete()
+
+    # ✅ Trigger file restore as a simulated command
     fake_message = cb.message
     fake_message.text = f"/start {file_ref_id}"
+    fake_message.from_user.id = user_id  # Make sure ID is preserved
     await start_link_restore(client, fake_message)
