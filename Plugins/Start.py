@@ -17,6 +17,8 @@ async def is_admin(uid: int) -> bool:
 @subscription_required
 async def start_command(client: Client, message: Message):
     user_id = message.from_user.id
+    user = message.from_user
+    await add_user(user.id, user.first_name, user.username)
     mention = message.from_user.mention
     channels = await get_channels()
     main_channel = await get_main_channel()
