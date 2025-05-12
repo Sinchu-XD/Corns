@@ -23,7 +23,11 @@ def add_user(user_id: int):
         )
     except Exception as e:
         print(f"Error adding user: {e}")
-        
+
+async def get_users_count() -> int:
+    return users_collection.count_documents({})
+
+
 async def add_sudo(user_id: int):
     if not sudo_col.find_one({"user_id": user_id}):
         sudo_col.insert_one({"user_id": user_id})
