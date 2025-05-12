@@ -11,7 +11,7 @@ from bson import ObjectId
 db = MongoClient(Config.MONGO_URI).RichBot
 sudo_col = db.sudo_users
 settings_collection = db["settings"]
-users_col = db.users
+users_collection = db.users
 config_col = db["config"]
 
 def add_user(user_id: int):
