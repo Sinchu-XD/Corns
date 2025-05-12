@@ -110,4 +110,4 @@ async def recheck_subscription(client, cb: CallbackQuery):
     await cb.message.delete()
     fake_message = cb.message
     fake_message.text = f"/start {file_ref_id}"
-    await start_link_restore(c, fake_message)
+    await start_link_restore(client, fake_message)
