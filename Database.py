@@ -12,17 +12,18 @@ db = MongoClient(Config.MONGO_URI).RichBot
 sudo_col = db.sudo_users
 settings_collection = db["settings"]
 users_collection = db.users
+users_collection.insert_one({"user_id": 123, "first_name": "Test", "username": "testuser", "joined_on": datetime.utcnow()})
 config_col = db["config"]
 
-def add_user(user_id: int):
-    try:
-        users_collection.update_one(
-            {"user_id": user_id},
-            {"$set": {"user_id": user_id}},
-            upsert=True
-        )
-    except Exception as e:
-        print(f"Error adding user: {e}")
+async def add_user(user_id: int, first_name: str, username: str = None):
+    if not users_collection.find_one({"user_id": user_id}):
+        users_col.insert_one({
+            "user_id": user_id,
+            "first_name": first_name,
+            "username": username,
+            "joined_on": datetime.utcnow()
+        })
+
 
 async def get_users_count() -> int:
     return users_collection.count_documents({})
