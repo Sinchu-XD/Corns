@@ -77,8 +77,14 @@ async def start_link_restore(c: Client, m: Message):
         quote=True
     )
 
+    # ⬇️ Handling file sending based on the type
     try:
-        sent = await c.send_cached_media(m.chat.id, data["file_id"])
+        if data['file_type'] == 'photo':  # Send photo
+            sent = await c.send_photo(m.chat.id, data["file_id"])
+        elif data['file_type'] == 'video':  # Send video
+            sent = await c.send_video(m.chat.id, data["file_id"])
+        else:  # Default to sending as document (works for all file types)
+            sent = await c.send_document(m.chat.id, data["file_id"])
     except Exception as e:
         return await m.reply(f"❌ Failed to send media: {e}")
 
@@ -89,6 +95,7 @@ async def start_link_restore(c: Client, m: Message):
         await info_msg.delete()
     except Exception as e:
         print(f"[AUTO DELETE ERROR] {e}")
+
 
 
 @bot.on_callback_query(filters.regex("check_join_restore"))
