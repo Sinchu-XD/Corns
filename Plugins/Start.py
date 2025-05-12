@@ -45,15 +45,16 @@ async def start_command(client: Client, message: Message):
             reply_markup=InlineKeyboardMarkup(buttons)
         )
 
-    # ✅ Verified normal user
+    # ✅ Normal user view
     keyboard = []
+
     if main_channel:
         keyboard.append([InlineKeyboardButton("🏠 Main Channel", url=f"https://t.me/{main_channel}")])
 
     keyboard.append([InlineKeyboardButton("✅ Check", callback_data="check_join")])
 
     return await message.reply(
-        "✅ Welcome! You're verified..",
+        "👋 To use this bot, please make sure you've joined all the required channels.\n\nOnce done, click the ✅ **Check** button below.",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
