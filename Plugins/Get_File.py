@@ -26,22 +26,7 @@ async def start_link_restore(c: Client, m: Message):
     file_ref_id = m.text.split(" ", 1)[1]
 
     # ✅ Enforce join for both required channels
-    required_channels = await get_channels()
-    not_joined = []
 
-    for ch in required_channels:
-        if not await is_member(c, user_id, ch):
-            not_joined.append(ch)
-
-    if not_joined:
-        buttons = [
-            [InlineKeyboardButton(f"📡 Join @{ch}", url=f"https://t.me/{ch}")] for ch in not_joined
-        ]
-        buttons.append([InlineKeyboardButton("✅ I Joined", callback_data=f"check_join_restore|{file_ref_id}")])
-        return await m.reply(
-            "🚫 To access the file, please join the required channels first:",
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
 
     # ✅ Proceed with file restore
     try:
