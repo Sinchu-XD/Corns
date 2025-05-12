@@ -101,6 +101,7 @@ async def start_link_restore(c: Client, m: Message):
 @bot.on_callback_query(filters.regex("check_join_restore"))
 async def recheck_subscription(client, cb: CallbackQuery):
     user_id = cb.from_user.id
+    file_ref_id = cb.data.split("|")[1]
     if await check_subscription(client, user_id):
         await cb.message.edit("✅ You're successfully verified! You can now use the bot.")
     else:
