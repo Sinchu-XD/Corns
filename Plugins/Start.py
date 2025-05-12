@@ -50,9 +50,11 @@ async def start_command(client: Client, message: Message):
     if main_channel:
         keyboard.append([InlineKeyboardButton("🏠 Main Channel", url=f"https://t.me/{main_channel}")])
 
+    keyboard.append([InlineKeyboardButton("✅ Check", callback_data="check_join")])
+
     return await message.reply(
         "✅ Welcome! You're verified..",
-        reply_markup=InlineKeyboardMarkup(keyboard) if keyboard else None
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 
