@@ -89,7 +89,7 @@ async def recheck_join_button(c: Client, cb: CallbackQuery):
     not_joined = []
 
     for ch in channels:
-        if not await check_subscription(c, user_id, ch):
+        if not await check_subscription(c, user_id):
             not_joined.append(ch)
 
     if not_joined:
