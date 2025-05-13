@@ -1,4 +1,4 @@
-from Bot import client
+from Bot import bot
 import os
 import importlib
 
@@ -11,4 +11,4 @@ for filename in os.listdir(plugin_folder):
 
 if __name__ == "__main__":
     print(">> Bot Starting...")
-    client.run_until_disconnected()
+    bot.run_until_disconnected()
