@@ -83,7 +83,6 @@ async def handle_file(event):
             f"#UPLOAD\n👤 **Uploader:** {mention}\n"
             f"📦 **Type:** {file_type}\n🆔 **File Ref ID:** `{file_ref_id}`\n"
             f"💾 **File Size:** {file_size_mb:.2f} MB\n"
-            f"📅 **Upload Time:** {file_info['upload_time']}\n"
             f"🔗 [Open File Link]({link})",
             parse_mode="md"
         )
