@@ -5,7 +5,7 @@ from bson.errors import InvalidId
 from Config import Config
 from telethon.tl.types import ChannelParticipant
 from telethon.tl.functions.channels import GetParticipantRequest
-from Decorators import subscription_required, check_subscription
+from Decorators import subscription_required
 from telethon.tl.custom import Button
 import asyncio
 
@@ -62,25 +62,27 @@ async def start_link_restore(event):
         print(f"[LOG ERROR] Failed to log restore: {e}")
 
     # ✅ Notify and forward media
-    original_msg = await bot.get_messages(data["chat_id"], ids=data["message_id"])
+    try:
+        original_msg = await bot.get_messages(data["chat_id"], ids=data["message_id"])
         
         # Send file to user without forward tag
-        await bot.send_file(
+        sent = await bot.send_file(
             event.chat_id,
             file=original_msg.media,
             caption="📂 Sending your video...\n\nThis video will auto-delete in 20 minutes.",
             force_document=True if data["file_type"] == "document" else False
         )
+
+        # Auto-delete the message after 20 minutes (1200 seconds)
+        await asyncio.sleep(1200)
+        try:
+            await sent.delete()  # Delete the sent message
+        except Exception as e:
+            print(f"[AUTO DELETE ERROR] {e}")
+
     except Exception as e:
         print(f"[RESTORE ERROR] {e}")
         await event.reply("⚠️ Failed to send the file. Try again later.")
-
-    await asyncio.sleep(1200)
-    try:
-        await sent.delete()
-        await info_msg.delete()
-    except Exception as e:
-        print(f"[AUTO DELETE ERROR] {e}")
 
 @bot.on(events.CallbackQuery(func=lambda e: e.data.decode().startswith("check_join_restore|")))
 async def recheck_join_button(event):
