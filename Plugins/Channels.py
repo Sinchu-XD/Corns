@@ -8,7 +8,7 @@ from Database import (
     set_main_channel,
     get_main_channel
 )
-from Helpers.filters import owner_or_sudo
+from Decorators import owner_or_sudo
 
 
 def extract_channel_input(raw: str) -> str:
