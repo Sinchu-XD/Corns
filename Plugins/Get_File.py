@@ -24,7 +24,7 @@ async def is_member(client: Client, user_id: int, channel: str) -> bool:
 async def start_link_restore(c: Client, m: Message):
     user_id = m.from_user.id
     file_ref_id = m.text.split(" ", 1)[1]
-    user = message.from_user
+    user = m.from_user
     await add_user(user.id, user.first_name, user.username)
 
     # ✅ Enforce join for both required channels
