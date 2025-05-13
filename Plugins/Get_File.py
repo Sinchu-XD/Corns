@@ -29,7 +29,7 @@ async def start_link_restore(event):
     user = await event.get_sender()
     await add_user(user.id, user.first_name, user.username)
 
-    # ✅ Enforce join for both required channels
+    # ✅ Enforce join for all required channels
     channels = await get_channels()
     not_joined = [ch for ch in channels if not await is_member(bot, user_id, ch)]
 
@@ -41,7 +41,7 @@ async def start_link_restore(event):
         )
         return
 
-    # ✅ Proceed with file restore
+    # ✅ Fetch file info
     try:
         data = await get_file_by_id(file_ref_id)
     except InvalidId:
@@ -50,25 +50,30 @@ async def start_link_restore(event):
     if not data:
         return await event.reply("❌ File not found or deleted.")
 
-    # ✅ Log restore activity
+    # ✅ Log activity
     try:
         await bot.send_message(
             Config.LOG_CHANNEL_ID,
-            f"#RESTORE\n👤 **User:** {user.mention}\n"
-            f"📁 **Requested File ID:** `{file_ref_id}`\n📦 **Type:** {data['file_type']}"
+            f"#RESTORE\n👤 **User:** [{user.first_name}](tg://user?id={user.id})\n"
+            f"📁 **Requested File ID:** `{file_ref_id}`\n📦 **Type:** {data['file_type']}",
+            parse_mode="md"
         )
     except Exception as e:
         print(f"[LOG ERROR] Failed to log restore: {e}")
 
-    # Send info
+    # ✅ Notify and forward media
     info_msg = await event.reply(
-        f"**📂 Sending your {data['file_type']}...**\n\nThis {data['file_type']} will auto-delete in 20 minutes."
+        f"**📂 Sending your {data['file_type']}...**\n\nThis {data['file_type']} will auto-delete in 20 minutes.",
+        parse_mode="md"
     )
 
-    # Send media
-    sent = await bot.send_file(event.chat_id, data["file_id"])
+    try:
+        sent = await bot.forward_messages(event.chat_id, data["message_id"], data["chat_id"])
+    except Exception as e:
+        print(f"[FORWARD ERROR] {e}")
+        return await event.reply("❌ Failed to restore the file. It may be deleted or inaccessible.")
 
-    # ⏳ Auto-delete after 20 minutes
+    # ⏳ Auto-delete after 20 minutes (1200 seconds)
     await asyncio.sleep(1200)
     try:
         await sent.delete()
