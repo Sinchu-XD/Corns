@@ -52,7 +52,6 @@ async def handle_file(event):
         "file_type": file_type,
         "file_size": file_size_mb,
         "uploaded_by": event.sender_id,
-        "upload_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
 
     # ✅ save_file should return a unique reference ID (Mongo ID or UUID)
