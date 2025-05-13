@@ -1,6 +1,7 @@
 from telethon import TelegramClient, events
 from telethon.tl.types import InputPeerUser
 from Config import Config
+from Bot import bot
 from Database import add_user, get_channels, get_sudo_list, get_main_channel
 from Decorators import subscription_required, check_subscription
 
