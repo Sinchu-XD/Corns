@@ -6,12 +6,16 @@ from Decorators import owner_or_sudo
 
 @bot.on(events.NewMessage(pattern=None, func=owner_or_sudo))
 async def handle_file(event):
-    # Check if the message is a media (photo, video, document)
+    # Check if the message is from a private chat
+    if not event.is_private:
+        return await event.reply("This command can only be used in private chats.")
+
+    # Check if the message contains media (photo, video, document)
     media = event.photo or event.video or event.document
     if not media:
         return await event.reply("Send a photo, video, or document.")
     
-    # Determine the file type
+    # Determine the file type (photo, video, or document)
     file_type = (
         "photo" if event.photo else
         "video" if event.video else
