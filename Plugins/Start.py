@@ -18,7 +18,7 @@ async def start_command(event):
     user = await event.get_sender()
     await add_user(user.id, user.first_name, user.username)
     mention = f"[{user.first_name}](tg://user?id={user.id})"
-    channels = await get_channels()
+    channels = await get_channels()  # Get all required channels
     main_channel = await get_main_channel()
 
     try:
@@ -36,6 +36,7 @@ async def start_command(event):
                 "⚠️ You need to add at least **2 channels** using:\n`/addch <slot> <@channel>`"
             )
 
+        # Create a list of buttons for each channel
         buttons = [[("📡 View Channels", "view_channels")]]
         if main_channel:
             buttons.append([("🏠 Main Channel", f"https://t.me/{main_channel}")])
@@ -47,6 +48,11 @@ async def start_command(event):
 
     # ✅ Normal user view
     keyboard = []
+
+    if isinstance(channels, dict):
+        # Generate buttons for each channel
+        for slot, username in channels.items():
+            keyboard.append([f"🔹 Slot {slot}: @{username}"])
 
     if main_channel:
         keyboard.append([("🏠 Main Channel", f"https://t.me/{main_channel}")])
@@ -82,8 +88,10 @@ async def view_channels_callback(event):
         return await event.edit("❌ No channels added yet.")
 
     if isinstance(channels, dict):
+        # If channels are stored in a dictionary, show slot details
         channel_list = "\n".join([f"🔹 Slot {slot}: @{username}" for slot, username in channels.items()])
     elif isinstance(channels, list):
+        # If channels are stored in a list, show channel names
         channel_list = "\n".join([f"🔹 @{username}" for username in channels])
     else:
         return await event.edit("⚠️ Invalid channel data format.")
@@ -110,4 +118,3 @@ async def back_to_start(event):
         "👋 Welcome Admin!\n\n📤 Send any file to convert into a sharable link.",
         buttons=buttons
     )
-    
