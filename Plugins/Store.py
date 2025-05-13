@@ -32,7 +32,12 @@ async def handle_file(event):
     }
 
     # ✅ save_file should return a unique reference ID (Mongo ID or UUID)
-    file_ref_id = await save_file(file_info)
+    file_ref_id = await save_file(
+        user_id=event.sender_id,
+        chat_id=event.chat_id,
+        message_id=event.id,
+        file_type=file_type
+    )
 
     # ✅ Link format
     link = f"https://t.me/{Config.BOT_USERNAME}?start={file_ref_id}"
