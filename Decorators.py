@@ -1,5 +1,4 @@
 from Config import Config
-from telethon.tl import Update
 from telethon import events
 from Database import get_sudo_list
 from telethon.tl.functions.channels import GetParticipantRequest
