@@ -1,4 +1,4 @@
-from telethon import TelegramClient, events
+from telethon import TelegramClient, events, Button
 from telethon.tl.types import InputPeerUser
 from Config import Config
 from Bot import bot
@@ -37,9 +37,11 @@ async def start_command(event):
             )
 
         # Create a list of buttons for each channel
-        buttons = [[("📡 View Channels", "view_channels")]]
+        buttons = [
+            [Button.inline("📡 View Channels", b"view_channels")],
+        ]
         if main_channel:
-            buttons.append([("🏠 Main Channel", f"https://t.me/{main_channel}")])
+            buttons.append([Button.url("🏠 Main Channel", f"https://t.me/{main_channel}")])
 
         return await event.reply(
             "👋 Welcome Admin!\n\n📤 Send any file to convert into a sharable link.",
@@ -55,9 +57,9 @@ async def start_command(event):
             keyboard.append([f"🔹 Slot {slot}: @{username}"])
 
     if main_channel:
-        keyboard.append([("🏠 Main Channel", f"https://t.me/{main_channel}")])
+        keyboard.append([Button.url("🏠 Main Channel", f"https://t.me/{main_channel}")])
 
-    keyboard.append([("✅ Check", "check_join")])
+    keyboard.append([Button.inline("✅ Check", b"check_join")])
 
     return await event.reply(
         "👋 To use this bot, please make sure you've joined all the required channels.\n\nOnce done, click the ✅ **Check** button below.",
@@ -98,7 +100,7 @@ async def view_channels_callback(event):
 
     await event.edit(
         f"📡 **Required Channels:**\n\n{channel_list}",
-        buttons=[("🔙 Back", "start_back")]
+        buttons=[Button.inline("🔙 Back", b"start_back")]
     )
 
 
@@ -110,11 +112,12 @@ async def back_to_start(event):
         return await event.answer("🚫 Not allowed.", alert=True)
 
     main_channel = await get_main_channel()
-    buttons = [("📡 View Channels", "view_channels")]
+    buttons = [Button.inline("📡 View Channels", b"view_channels")]
     if main_channel:
-        buttons.append(("🏠 Main Channel", f"https://t.me/{main_channel}"))
+        buttons.append(Button.url("🏠 Main Channel", f"https://t.me/{main_channel}"))
 
     await event.edit(
         "👋 Welcome Admin!\n\n📤 Send any file to convert into a sharable link.",
         buttons=buttons
     )
+    
