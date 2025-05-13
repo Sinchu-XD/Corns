@@ -58,7 +58,6 @@ async def save_file(user_id: int, chat_id: int, message_id: int, file_type: str)
         "chat_id": chat_id,           # required to forward later
         "message_id": message_id,     # message to be forwarded
         "file_type": file_type,
-        "file_size": file_size,
         "time": datetime.utcnow()
     }
     insert = files_col.insert_one(doc)
