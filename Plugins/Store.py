@@ -1,38 +1,41 @@
-from pyrogram import Client, filters
-from pyrogram.types import Message
+from telethon import TelegramClient, events
 from Database import save_file
-from Bot import bot
 from Config import Config
+from Bot import bot
 from Decorators import owner_or_sudo
 
-@bot.on_message(
-    (filters.private & filters.media & owner_or_sudo) #filters.chat(Config.LOG_CHANNEL_ID)) 
-)
-async def handle_file(c: Client, m: Message):
-    media = m.photo or m.video or m.document
+@bot.on(events.NewMessage(pattern=None, func=owner_or_sudo))
+async def handle_file(event):
+    # Check if the message is a media (photo, video, document)
+    media = event.photo or event.video or event.document
     if not media:
-        return await m.reply("Send a photo, video, or document.")
+        return await event.reply("Send a photo, video, or document.")
     
+    # Determine the file type
     file_type = (
-        "photo" if m.photo else
-        "video" if m.video else
+        "photo" if event.photo else
+        "video" if event.video else
         "document"
     )
     
+    # Save the file
     file_id = media.file_id
-    file_ref_id = await save_file(m.from_user.id, file_id, file_type)
+    file_ref_id = await save_file(event.sender_id, file_id, file_type)
 
+    # Generate the link for the file
     link = f"https://t.me/{Config.BOT_USERNAME}?start={file_ref_id}"
-    await m.reply(
+    
+    # Reply with the link
+    await event.reply(
         f"✅ File saved!\n🔗 **Here’s your link:**\n`{link}`\n🆔 File ID: `{file_ref_id}`",
         quote=True
     )
 
-    # ✅ Log to LOG_CHANNEL
+    # Log the file upload to the log channel
     try:
         await bot.send_message(
             Config.LOG_CHANNEL_ID,
-            f"#UPLOAD\n👤 **Uploader:** {m.from_user.mention}\n"
+            f"#UPLOAD\n👤 **Uploader:** {event.sender.mention}\n"
             f"📦 **Type:** {file_type}\n🆔 **File Ref ID:** `{file_ref_id}`\n🔗 [Open File Link]({link})"
         )
     except Exception as e:
