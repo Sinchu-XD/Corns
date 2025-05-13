@@ -1,7 +1,7 @@
 from telethon import TelegramClient
 from Config import Config
 
-client = TelegramClient(
+bot = TelegramClient(
     "RichFeatureBot", 
     Config.API_ID,
     Config.API_HASH
