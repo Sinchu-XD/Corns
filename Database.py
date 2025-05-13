@@ -1,6 +1,3 @@
-# Telegram @Itz_Your_4Bhi
-# Copyright ©️ 2025
-
 from datetime import datetime
 from pymongo import MongoClient
 from bson import ObjectId
@@ -17,16 +14,7 @@ settings_collection = db.settings
 files_col = db.files
 config_col = db.config
 
-# Insert a test user (optional, remove in production)
-users_collection.insert_one({
-    "user_id": 123,
-    "first_name": "Test",
-    "username": "testuser",
-    "joined_on": datetime.utcnow()
-})
-
 # ========== USERS ==========
-
 async def add_user(user_id: int, first_name: str, username: str = None):
     if not users_collection.find_one({"user_id": user_id}):
         users_collection.insert_one({
@@ -40,7 +28,6 @@ async def get_users_count() -> int:
     return users_collection.count_documents({})
 
 # ========== SUDO USERS ==========
-
 async def add_sudo(user_id: int):
     if not sudo_col.find_one({"user_id": user_id}):
         sudo_col.insert_one({"user_id": user_id})
@@ -52,7 +39,6 @@ async def get_sudo_list():
     return [x["user_id"] for x in sudo_col.find().to_list(length=1000)]
 
 # ========== REQUIRED CHANNELS ==========
-
 async def add_channel(username: str):
     if not channel_col.find_one({"username": username}):
         channel_col.insert_one({"username": username})
@@ -65,21 +51,23 @@ async def get_channels():
 
 # ========== FILES ==========
 
-async def save_file(user_id: int, file_id: str, file_type: str):
+# ✅ UPDATED
+async def save_file(user_id: int, chat_id: int, message_id: int, file_type: str):
     doc = {
         "user_id": user_id,
-        "file_id": file_id,
+        "chat_id": chat_id,           # required to forward later
+        "message_id": message_id,     # message to be forwarded
         "file_type": file_type,
         "time": datetime.utcnow()
     }
     insert = files_col.insert_one(doc)
     return str(insert.inserted_id)
 
+# ✅ UPDATED
 async def get_file_by_id(file_id: str):
     return files_col.find_one({"_id": ObjectId(file_id)})
 
 # ========== FORCE CHECK SETTING ==========
-
 async def set_force_check(value: bool):
     settings_collection.update_one(
         {"_id": "force_check"},
@@ -92,7 +80,6 @@ async def get_force_check():
     return setting["value"] if setting else False
 
 # ========== MAIN CHANNEL CONFIG ==========
-
 async def set_main_channel(channel: str):
     config_col.update_one(
         {"_id": "main_channel"},
