@@ -62,18 +62,19 @@ async def start_link_restore(event):
         print(f"[LOG ERROR] Failed to log restore: {e}")
 
     # ✅ Notify and forward media
-    info_msg = await event.reply(
-        f"**📂 Sending your {data['file_type']}...**\n\nThis {data['file_type']} will auto-delete in 20 minutes.",
-        parse_mode="md"
-    )
-
-    try:
-        sent = await bot.forward_messages(event.chat_id, data["message_id"], data["chat_id"])
+    original_msg = await bot.get_messages(data["chat_id"], ids=data["message_id"])
+        
+        # Send file to user without forward tag
+        await bot.send_file(
+            event.chat_id,
+            file=original_msg.media,
+            caption="📂 Sending your video...\n\nThis video will auto-delete in 20 minutes.",
+            force_document=True if data["file_type"] == "document" else False
+        )
     except Exception as e:
-        print(f"[FORWARD ERROR] {e}")
-        return await event.reply("❌ Failed to restore the file. It may be deleted or inaccessible.")
+        print(f"[RESTORE ERROR] {e}")
+        await event.reply("⚠️ Failed to send the file. Try again later.")
 
-    # ⏳ Auto-delete after 20 minutes (1200 seconds)
     await asyncio.sleep(1200)
     try:
         await sent.delete()
