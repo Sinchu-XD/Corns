@@ -61,7 +61,6 @@ async def handle_file(event):
         chat_id=event.chat_id,
         message_id=event.id,
         file_type=file_type,
-        file_size=file_size_mb,
         upload_time=file_info["upload_time"]
     )
 
