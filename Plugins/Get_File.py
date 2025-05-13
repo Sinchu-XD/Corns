@@ -71,7 +71,6 @@ async def start_link_restore(event):
     except Exception as e:
         print(f"[AUTO DELETE ERROR] {e}")
 
-
 @bot.on(events.CallbackQuery(func=lambda e: e.data.decode().startswith("check_join_restore|")))
 async def recheck_join_button(event):
     file_ref_id = event.data.decode().split("|")[1]
@@ -79,8 +78,9 @@ async def recheck_join_button(event):
     channels = await get_channels()
     not_joined = []
 
+    # ✅ Recheck if user has joined required channels
     for ch in channels:
-        if not await check_subscription(bot, user_id):
+        if not await is_member(bot, user_id, ch):  # Check if the user is a member
             not_joined.append(ch)
 
     if not_joined:
