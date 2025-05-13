@@ -63,9 +63,7 @@ async def is_sudo(event: events.NewMessage.Event):
     sudoers = await get_sudo_list()
     return event.sender_id in sudoers
 
-async def owner_or_sudo(event: events.NewMessage.Event):
-    if event.sender_id == Config.OWNER_ID:
-        return True
+async def owner_or_sudo(event):
+    user = await event.get_sender()
     sudoers = await get_sudo_list()
-    return event.sender_id in sudoers
-
+    return user and user.id in sudoers or user.id == Config.OWNER_ID
