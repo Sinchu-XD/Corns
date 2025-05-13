@@ -60,7 +60,6 @@ async def handle_file(event):
         chat_id=event.chat_id,
         message_id=event.id,
         file_type=file_type,
-        upload_time=file_info["upload_time"]
     )
 
     # ✅ Link format
