@@ -3,6 +3,8 @@ from Bot import bot
 from Database import get_file_by_id, get_channels, add_user
 from bson.errors import InvalidId
 from Config import Config
+from telethon.tl.types import ChannelParticipant
+from telethon.tl.functions.channels import GetParticipantRequest
 from Decorators import subscription_required, check_subscription
 from telethon.tl.custom import Button
 import asyncio
@@ -11,8 +13,11 @@ import asyncio
 async def is_member(client, user_id: int, channel: str) -> bool:
     try:
         chat = await client.get_entity(channel)
-        member = await client.get_participant(chat, user_id)
-        return member.status in ["member", "administrator", "creator"]
+        result = await client(GetParticipantRequest(chat, user_id))
+        participant = result.participant
+
+        # Check participant role
+        return isinstance(participant, ChannelParticipant)
     except Exception as e:
         print(f"[JOIN CHECK ERROR] {e}")
         return False
