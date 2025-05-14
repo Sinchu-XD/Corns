@@ -1,4 +1,5 @@
 from Config import Config
+from Bot import bot
 from telethon import events, Button
 from telethon.tl.functions.channels import GetParticipantRequest
 from telethon.errors import UserNotParticipantError, ChatAdminRequiredError
@@ -46,16 +47,37 @@ def subscription_required(func):
         for username in usernames:
             buttons.append([Button.url(f"📡 Join @{username}", f"https://t.me/{username}")])
 
-        buttons.append([Button.inline("✅ I Joined", b"check_join")])
+        
         if main_channel:
             buttons.append([Button.url("🏠 Main Channel", f"https://t.me/{main_channel}")])
+
+        buttons.append([Button.inline("✅ I Joined", b"check_join")])
 
         await event.respond(
             "📥 Please join all required channels to use this bot:",
             buttons=buttons
         )
+        return
     return wrapper
 
+from telethon import Button
+from telethon.tl.functions.messages import DeleteMessagesRequest
+
+@bot.on(events.CallbackQuery(pattern="check_join"))
+async def recheck_subscription(event):
+    user_id = event.sender_id
+    if await check_subscription(bot, user_id):
+        await event.edit("✅ You're successfully verified! You can now use the bot.\n\n **Please Run Same As Again You Get From Channel**")
+    else:
+        await event.answer("🚫 You haven't joined all channels yet.", alert=True)
+
+    # Check if event._message exists before trying to delete it
+    if event._message:
+        try:
+            await event._message.delete()
+        except Exception as e:
+            print(f"Failed to delete the message: {e}")
+        
 # Function to check if the user is the owner of the bot
 def owner_only(event: events.NewMessage.Event):
     return event.sender_id == Config.OWNER_ID
